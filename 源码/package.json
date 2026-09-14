@@ -1,6 +1,6 @@
 {
   "name": "nuphy-line-dog-desktop-pet",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "private": true,
   "description": "Independent NUPHY desktop pet using native GIF playback.",
   "author": "remake1026",
@@ -16,7 +16,8 @@
   "scripts": {
     "start": "electron .",
     "task-complete": "electron . --task-complete",
-    "dist:win": "electron-builder --win nsis --x64 --ia32 --publish never"
+    "dist:win": "electron-builder --win nsis --x64 --ia32 --publish never",
+    "dist:mac": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg zip --arm64 --publish never"
   },
   "build": {
     "appId": "io.github.remake1026.desktop-pets",
@@ -27,6 +28,7 @@
     },
     "asar": true,
     "npmRebuild": false,
+    "afterPack": "installer-resources/afterPack.js",
     "files": [
       "assets/**/*",
       "index.html",
@@ -36,6 +38,51 @@
       "styles.css",
       "package.json"
     ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "installer-resources/icon.png",
+      "category": "public.app-category.entertainment",
+      "artifactName": "LineDog-${version}-Mac-${arch}.${ext}",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "extendInfo": {
+        "LSUIElement": true,
+        "NSHighResolutionCapable": true
+      }
+    },
+    "dmg": {
+      "title": "线条小狗 ${version}",
+      "artifactName": "LineDog-${version}-Mac-${arch}.${ext}",
+      "icon": "installer-resources/icon.png",
+      "iconSize": 80,
+      "contents": [
+        {
+          "x": 140,
+          "y": 186,
+          "type": "file"
+        },
+        {
+          "x": 400,
+          "y": 186,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
     "win": {
       "target": "nsis",
       "icon": "installer-resources/icon.ico",

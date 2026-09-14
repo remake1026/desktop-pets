@@ -4,6 +4,15 @@ contextBridge.exposeInMainWorld("nuphyPetWindow", {
   moveTo(point) {
     return ipcRenderer.invoke("pet-window:move-to", point);
   },
+  startDrag() {
+    return ipcRenderer.invoke("pet-window:start-drag");
+  },
+  endDrag() {
+    return ipcRenderer.invoke("pet-window:end-drag");
+  },
+  setIgnoreMouseEvents(ignore) {
+    ipcRenderer.send("pet-window:set-ignore-mouse-events", ignore);
+  },
   resize(size) {
     return ipcRenderer.invoke("pet-window:resize", size);
   },

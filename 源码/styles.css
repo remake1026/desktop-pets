@@ -6,6 +6,7 @@ body {
   overflow: hidden;
   background: transparent;
   user-select: none;
+  pointer-events: none;
 }
 
 body {
@@ -23,6 +24,7 @@ body {
   --pet-width: 180px;
   --pet-height: 180px;
   background: transparent;
+  pointer-events: none;
 }
 
 #pet-hit-area {
@@ -36,6 +38,7 @@ body {
   background: rgba(200, 200, 200, 0.01);
   overflow: visible;
   cursor: grab;
+  pointer-events: auto;
 }
 
 #pet-hit-area:active {
@@ -66,6 +69,7 @@ body {
   font-size: 13px;
   line-height: 1;
   white-space: nowrap;
+  pointer-events: auto;
 }
 
 #close-tip[hidden] {
@@ -83,6 +87,7 @@ body {
   display: flex;
   opacity: 0;
   pointer-events: none;
+  -webkit-app-region: no-drag;
   transform: translateY(4px);
   transition:
     opacity 140ms ease,

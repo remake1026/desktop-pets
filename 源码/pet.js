@@ -38,6 +38,8 @@ let taskCompleteTimer = 0;
 let clickTimer = 0;
 let lastWindowSize = { width: 0, height: 0 };
 let suppressHoverUntilLeave = false;
+let isScaling = false;
+let ignoreMouseEvents = true;
 
 const pet = document.querySelector("#pet");
 const petShell = document.querySelector("#pet-shell");
@@ -77,6 +79,28 @@ function movePetWindow(event) {
     y: event.screenY - dragOffset.y,
     petBounds: getPetBoundsInWindow(),
   });
+}
+
+function setIgnoreMouseEvents(ignore) {
+  if (ignoreMouseEvents === ignore) {
+    return;
+  }
+
+  ignoreMouseEvents = ignore;
+  window.nuphyPetWindow?.setIgnoreMouseEvents?.(ignore);
+}
+
+function updatePointerPassthrough(event) {
+  if (isDragging || isPressing || isScaling) {
+    setIgnoreMouseEvents(false);
+    return;
+  }
+
+  const x = Number.isFinite(event?.clientX) ? event.clientX : -1;
+  const y = Number.isFinite(event?.clientY) ? event.clientY : -1;
+  const target = x >= 0 && y >= 0 ? document.elementFromPoint(x, y) : null;
+  const interactive = Boolean(target?.closest("#pet-hit-area, #close-tip, #controls"));
+  setIgnoreMouseEvents(!interactive);
 }
 
 function getPetBoundsInWindow() {
@@ -266,6 +290,9 @@ hitArea.addEventListener("pointerover", enterHover);
 hitArea.addEventListener("pointerout", leaveHover);
 window.addEventListener("mousemove", updateHoverFromPointer);
 window.addEventListener("pointermove", updateHoverFromPointer);
+window.addEventListener("pointermove", updatePointerPassthrough);
+window.addEventListener("pointerdown", updatePointerPassthrough);
+window.addEventListener("pointerup", updatePointerPassthrough);
 
 hitArea.addEventListener("mousedown", (event) => {
   if (event.button !== 0) return;
@@ -281,6 +308,8 @@ hitArea.addEventListener("mousedown", (event) => {
     x: event.screenX - window.screenX,
     y: event.screenY - window.screenY,
   };
+  setIgnoreMouseEvents(false);
+  window.nuphyPetWindow?.startDrag?.();
 });
 
 window.addEventListener("mousemove", (event) => {
@@ -310,6 +339,7 @@ window.addEventListener("mouseup", () => {
   const completedDrag = isDragging;
   isPressing = false;
   isDragging = false;
+  window.nuphyPetWindow?.endDrag?.();
 
   if (!completedDrag) return;
 
@@ -365,6 +395,8 @@ scaleHandle.addEventListener("pointerdown", (event) => {
   const pointerId = event.pointerId;
 
   scaleHandle.setPointerCapture(pointerId);
+  isScaling = true;
+  setIgnoreMouseEvents(false);
 
   function dragScale(moveEvent) {
     const diagonalDelta = (moveEvent.screenX - startX + moveEvent.screenY - startY) / 2;
@@ -381,6 +413,7 @@ scaleHandle.addEventListener("pointerdown", (event) => {
       scaleHandle.releasePointerCapture(pointerId);
     }
 
+    isScaling = false;
     setPetState("default", { force: true });
   }
 
