@@ -10,7 +10,8 @@
 
 ## 下载
 
-[下载最新版 line puppy](https://github.com/remake1026/desktop-pets/releases/latest)
+
+[Windows 10 / 11 下载最新版 line puppy](https://github.com/remake1026/desktop-pets/releases/latest)
 
 
 ## 互动展示
