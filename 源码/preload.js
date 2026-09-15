@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
-contextBridge.exposeInMainWorld("nuphyPetWindow", {
+contextBridge.exposeInMainWorld("linePuppyWindow", {
   moveTo(point) {
     return ipcRenderer.invoke("pet-window:move-to", point);
   },
@@ -28,5 +28,23 @@ contextBridge.exposeInMainWorld("nuphyPetWindow", {
     return () => {
       ipcRenderer.removeListener("pet:task-complete", listener);
     };
+  },
+  onScroll(callback) {
+    if (typeof callback !== "function") return () => {};
+    const listener = () => callback();
+    ipcRenderer.on("pet:scroll", listener);
+    return () => ipcRenderer.removeListener("pet:scroll", listener);
+  },
+  onMusicState(callback) {
+    if (typeof callback !== "function") return () => {};
+    const listener = (_event, state) => callback(state);
+    ipcRenderer.on("pet:music-state", listener);
+    return () => ipcRenderer.removeListener("pet:music-state", listener);
+  },
+  onKeyboardEffect(callback) {
+    if (typeof callback !== "function") return () => {};
+    const listener = (_event, action) => callback(action);
+    ipcRenderer.on("pet:keyboard-effect", listener);
+    return () => ipcRenderer.removeListener("pet:keyboard-effect", listener);
   },
 });

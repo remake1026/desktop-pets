@@ -35,7 +35,7 @@ body {
   place-items: center;
   border: 4px solid transparent;
   border-radius: 4px;
-  background: rgba(200, 200, 200, 0.01);
+  background: transparent;
   overflow: visible;
   cursor: grab;
   pointer-events: auto;
@@ -96,17 +96,10 @@ body {
 }
 
 #pet-hit-area:hover #controls,
-#pet-hit-area:focus-within #controls,
-#controls.is-scaling {
+#pet-hit-area:focus-within #controls {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
-}
-
-#controls.is-hidden-after-scale {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(4px);
 }
 
 .scale-button {

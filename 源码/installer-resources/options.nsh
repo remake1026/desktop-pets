@@ -2,6 +2,10 @@
   !define LINE_DOG_RUN_KEY "Software\Microsoft\Windows\CurrentVersion\Run"
 !endif
 
+!ifndef LINE_DOG_APPROVED_KEY
+  !define LINE_DOG_APPROVED_KEY "Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run"
+!endif
+
 !ifndef BUILD_UNINSTALLER
   Var lineDogDesktopChoice
   Var lineDogStartupChoice
@@ -22,7 +26,7 @@
         ${GetFileName} "$INSTDIR" $R0
         ${If} $R0 == "LineDog"
           ${GetParent} "$INSTDIR" $R0
-          StrCpy $INSTDIR "$R0\线条小狗"
+          StrCpy $INSTDIR "$R0\line puppy"
         ${EndIf}
       ${EndIf}
     FunctionEnd
@@ -40,7 +44,7 @@
       ${NSD_CreateCheckbox} 0u 48u 100% 16u "开机自动启动"
       Pop $lineDogStartupControl
       ${NSD_SetState} $lineDogStartupControl $lineDogStartupChoice
-      ${NSD_CreateLabel} 12u 70u 90% 34u "登录 Windows 后自动启动线条小狗。两个选项均默认勾选，可以按需取消。"
+      ${NSD_CreateLabel} 12u 70u 90% 34u "登录 Windows 后自动启动line puppy。两个选项均默认勾选，可以按需取消。"
       Pop $0
       nsDialogs::Show
     FunctionEnd
@@ -54,27 +58,40 @@
   !macro customInstall
     ${If} $lineDogDesktopChoice == ${BST_CHECKED}
       ClearErrors
-      CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "线条小狗桌面萌宠"
+      CreateShortCut "$newDesktopLink" "$appExe" "" "$appExe" 0 "" "" "line puppy桌面萌宠"
       ${If} ${Errors}
-        MessageBox MB_OK|MB_ICONEXCLAMATION "桌面快捷方式创建失败，仍可从开始菜单启动线条小狗。" /SD IDOK
+        MessageBox MB_OK|MB_ICONEXCLAMATION "桌面快捷方式创建失败，仍可从开始菜单启动line puppy。" /SD IDOK
       ${Else}
         WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
       ${EndIf}
     ${Else}
       Delete "$newDesktopLink"
     ${EndIf}
+    ; Migrate this installation's old machine-wide entry to a per-user entry,
+    ; so the running application can change it without administrator rights.
+    ReadRegStr $0 SHELL_CONTEXT "${LINE_DOG_RUN_KEY}" "line puppy"
+    ${If} $0 == '$\"$appExe$\"'
+      DeleteRegValue SHELL_CONTEXT "${LINE_DOG_RUN_KEY}" "line puppy"
+    ${EndIf}
     ${If} $lineDogStartupChoice == ${BST_CHECKED}
-      WriteRegStr SHELL_CONTEXT "${LINE_DOG_RUN_KEY}" "线条小狗" '$\"$appExe$\"'
+      WriteRegStr HKCU "${LINE_DOG_RUN_KEY}" "line puppy" '$\"$appExe$\"'
+      DeleteRegValue HKCU "${LINE_DOG_APPROVED_KEY}" "line puppy"
     ${Else}
-      DeleteRegValue SHELL_CONTEXT "${LINE_DOG_RUN_KEY}" "线条小狗"
+      DeleteRegValue HKCU "${LINE_DOG_RUN_KEY}" "line puppy"
+      DeleteRegValue HKCU "${LINE_DOG_APPROVED_KEY}" "line puppy"
     ${EndIf}
     System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
   !macroend
 !endif
 
 !macro customUnInstall
-  ReadRegStr $0 SHELL_CONTEXT "${LINE_DOG_RUN_KEY}" "线条小狗"
+  ReadRegStr $0 HKCU "${LINE_DOG_RUN_KEY}" "line puppy"
   ${If} $0 == '$\"$INSTDIR\${APP_EXECUTABLE_FILENAME}$\"'
-    DeleteRegValue SHELL_CONTEXT "${LINE_DOG_RUN_KEY}" "线条小狗"
+    DeleteRegValue HKCU "${LINE_DOG_RUN_KEY}" "line puppy"
+    DeleteRegValue HKCU "${LINE_DOG_APPROVED_KEY}" "line puppy"
+  ${EndIf}
+  ReadRegStr $0 SHELL_CONTEXT "${LINE_DOG_RUN_KEY}" "line puppy"
+  ${If} $0 == '$\"$INSTDIR\${APP_EXECUTABLE_FILENAME}$\"'
+    DeleteRegValue SHELL_CONTEXT "${LINE_DOG_RUN_KEY}" "line puppy"
   ${EndIf}
 !macroend

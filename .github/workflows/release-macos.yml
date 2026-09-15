@@ -29,7 +29,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/standard/LineDog-*-Mac-arm64.dmg
-            dist/standard/LineDog-*-Mac-arm64.zip
+            dist/standard/line puppy-*-Mac-arm64.dmg
+            dist/standard/line puppy-*-Mac-arm64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

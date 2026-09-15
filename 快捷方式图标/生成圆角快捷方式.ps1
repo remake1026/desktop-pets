@@ -7,8 +7,8 @@ Add-Type -AssemblyName System.Drawing
 $desktop = [Environment]::GetFolderPath('Desktop')
 $assetDir = $PSScriptRoot
 $projectDir = Split-Path -Parent $assetDir
-$projectName = Split-Path -Leaf $projectDir
-$sourcePath = Join-Path $desktop 'ScreenShot_2026-06-30_101428_433.png'
+$projectName = 'line puppy'
+$sourcePath = Join-Path $assetDir '图标icon.png'
 $roundedPngPath = Join-Path $assetDir "$projectName-rounded-${Radius}px.png"
 $iconPath = Join-Path $assetDir "$projectName-rounded-${Radius}px.ico"
 $shortcutPath = Join-Path $desktop "$projectName.lnk"

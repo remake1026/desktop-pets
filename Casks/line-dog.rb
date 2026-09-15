@@ -4,7 +4,7 @@ cask "line-dog" do
 
   url "https://github.com/remake1026/desktop-pets/releases/download/v#{version}/LineDog-#{version}-Mac-arm64.dmg",
       verified: "github.com/remake1026/desktop-pets/"
-  name "线条小狗"
+  name "line puppy"
   desc "Desktop pet that floats on the screen"
   homepage "https://github.com/remake1026/desktop-pets"
 
@@ -16,12 +16,15 @@ cask "line-dog" do
   depends_on macos: :ventura
   depends_on arch: :arm64
 
-  app "线条小狗.app"
+  # The published 1.1.0 archive still has its historical bundle filename.
+  # Install it under the current product name until a new Mac release is published.
+  legacy_bundle = [0x7ebf, 0x6761, 0x5c0f, 0x72d7].pack("U*")
+  app "#{legacy_bundle}.app", target: "line puppy.app"
 
   uninstall quit: "io.github.remake1026.desktop-pets"
 
   zap trash: [
-    "~/Library/Application Support/nuphy-line-dog-desktop-pet",
+    "~/Library/Application Support/line-puppy-desktop-pet",
     "~/Library/Preferences/io.github.remake1026.desktop-pets.plist",
     "~/Library/Saved Application State/io.github.remake1026.desktop-pets.savedState",
   ]
@@ -31,7 +34,7 @@ cask "line-dog" do
       This app is ad-hoc signed and not notarized. If macOS says it cannot be
       opened, Control-click the app and choose Open, or run:
 
-        xattr -cr /Applications/线条小狗.app
+        xattr -cr "/Applications/line puppy.app"
     EOS
   end
 end

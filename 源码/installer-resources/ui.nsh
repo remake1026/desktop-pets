@@ -4,5 +4,5 @@
   ManifestDPIAwareness PerMonitorV2,PerMonitor
   SetFont /LANG=2052 "Microsoft YaHei UI" 9
   !undef UNINSTALL_FILENAME
-  !define UNINSTALL_FILENAME "卸载线条小狗.exe"
+  !define UNINSTALL_FILENAME "卸载line puppy.exe"
 !macroend

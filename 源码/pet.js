@@ -4,19 +4,60 @@ const animations = {
   click: "assets/heart.gif",
   drag: "assets/special.gif",
   taskComplete: "assets/usageOver3Hours.gif",
+  scroll: "assets/scroll.gif",
+  mealtime: "assets/mealtime.gif",
+  startup: "assets/turn on.gif",
+  send: "assets/send.gif",
+  good: "assets/good.gif",
+  delete: "assets/delete.gif",
+  love520: "assets/520.gif",
+  love521: "assets/521.gif",
+  music: "assets/music.gif",
+  sleep: "assets/sleepy.gif",
+  sleep2: "assets/sleepy2.png",
 };
 
 const priority = {
   default: 0,
+  music: 1,
+  mealtime: 1,
   hover: 1,
-  click: 2,
-  drag: 3,
-  taskComplete: 4,
+  scroll: 2,
+  click: 3,
+  send: 3,
+  good: 3,
+  delete: 3,
+  drag: 4,
+  taskComplete: 5,
+  startup: 6,
+  love520: 6,
+  love521: 6,
+  sleep: 6,
+  sleep2: 6,
 };
 
 const TASK_COMPLETE_GIF_DURATION_MS = 2060;
 const TASK_COMPLETE_PLAY_COUNT = 2;
 const HEART_GIF_DURATION_MS = 1440;
+// turn on.gif: 18 frames, including the first and last frame pauses.
+const STARTUP_GIF_DURATION_MS = 2900;
+// scroll.gif: 18 frames, 80 ms per frame.
+const SCROLL_GIF_DURATION_MS = 1440;
+const SCROLL_IDLE_MS = 160;
+const KEYBOARD_GIF_DURATION_MS = { send: 1740, good: 1000, delete: 1840 };
+const GOOD_PLAY_COUNT = 2;
+const MUSIC_GIF_DURATION_MS = 1600;
+const SCHEDULED_ANIMATIONS = [
+  { time: "05:20", effect: "love520" }, // 05:20:00–05:20:59
+  { time: "17:20", effect: "love520" }, // 17:20:00–17:20:59
+  { time: "05:21", effect: "love521" }, // 05:21:00–05:21:59
+  { time: "17:21", effect: "love521" }, // 17:21:00–17:21:59
+];
+const MEALTIME_WINDOWS = [[9 * 60 + 30, 10 * 60 + 10], [12 * 60, 13 * 60], [20 * 60, 21 * 60]];
+const NIGHTTIME_WINDOWS = [
+  { start: 23 * 60, end: 24 * 60, effect: "sleep" },
+  { start: 0, end: 2 * 60, effect: "sleep2" },
+];
 const BASE_PET_WIDTH = 180;
 const BASE_HIT_AREA_WIDTH = 170;
 const BASE_HIT_AREA_HEIGHT = 150;
@@ -25,7 +66,6 @@ const WINDOW_PADDING_Y = 56;
 const MIN_SCALE = 0.6;
 const MAX_SCALE = 2;
 const DRAG_THRESHOLD_PX = 4;
-const SCALE_HANDLE_HIDE_DELAY_MS = 2500;
 let currentState = "default";
 let isPressing = false;
 let isDragging = false;
@@ -40,6 +80,28 @@ let lastWindowSize = { width: 0, height: 0 };
 let suppressHoverUntilLeave = false;
 let isScaling = false;
 let ignoreMouseEvents = true;
+let scrollTimer = 0;
+let scrollLoadListener = null;
+let lastScrollTime = 0;
+let scrollPlaybackId = 0;
+let startupPlaying = false;
+let startupPlayed = false;
+let taskCompleteAfterStartup = false;
+const keyboardPressed = { send: false, good: false, delete: false };
+let keyboardTimer = 0;
+let keyboardLoadListener = null;
+let keyboardErrorListener = null;
+let keyboardPlaybackId = 0;
+let scheduledPlaying = false;
+let scheduledPlaybackId = 0;
+let scheduledErrorListener = null;
+let failedScheduledSlot = "";
+let taskCompleteAfterScheduled = false;
+let musicPlaybackState = "idle";
+let musicCycleTimer = 0;
+let musicLoadListener = null;
+let musicErrorListener = null;
+let musicPlaybackId = 0;
 
 const pet = document.querySelector("#pet");
 const petShell = document.querySelector("#pet-shell");
@@ -49,8 +111,15 @@ const scaleHandle = document.querySelector("#scale-handle");
 const closeTip = document.querySelector("#close-tip");
 
 function setPetState(nextState, options = {}) {
+  if (startupPlaying && nextState !== "startup") return;
+  if (scheduledPlaying && nextState !== currentState) return;
   if (!animations[nextState]) {
     nextState = "default";
+  }
+
+  if (nextState === "default") {
+    if (isMealtime()) nextState = "mealtime";
+    else if (musicPlaybackState === "playing") nextState = "music";
   }
 
   if (!options.force && priority[nextState] < priority[currentState]) {
@@ -62,6 +131,10 @@ function setPetState(nextState, options = {}) {
 
   if (!img) return;
 
+  if (currentState === "scroll" && nextState !== "scroll") clearScrollEffect();
+  if (currentState === "music" && nextState !== "music") clearMusicCycle();
+  if (isKeyboardEffect(currentState) && nextState !== currentState) clearKeyboardEffect();
+
   if (img.dataset.current === nextSrc) {
     currentState = nextState;
 
@@ -70,11 +143,234 @@ function setPetState(nextState, options = {}) {
 
   currentState = nextState;
   img.dataset.current = nextSrc;
-  img.src = nextSrc;
+  if (nextState === "music") startMusicCycle();
+  img.src = nextState === "scroll" ? `${nextSrc}?play=${++scrollPlaybackId}`
+    : nextState === "music" ? `${nextSrc}?play=${++musicPlaybackId}`
+    : isKeyboardEffect(nextState) ? `${nextSrc}?play=${++keyboardPlaybackId}`
+    : (nextState === "love520" || nextState === "love521") ? `${nextSrc}?play=${++scheduledPlaybackId}` : nextSrc;
+}
+
+function clearMusicCycle() {
+  window.clearTimeout(musicCycleTimer);
+  musicCycleTimer = 0;
+  if (musicLoadListener) pet.removeEventListener("load", musicLoadListener);
+  if (musicErrorListener) pet.removeEventListener("error", musicErrorListener);
+  musicLoadListener = null;
+  musicErrorListener = null;
+}
+
+function startMusicCycle() {
+  clearMusicCycle();
+  function finishCycle() {
+    if (currentState !== "music") return;
+    if (musicPlaybackState === "playing") {
+      musicCycleTimer = window.setTimeout(finishCycle, MUSIC_GIF_DURATION_MS);
+    } else {
+      suppressHoverUntilLeave = isHovering;
+      setPetState("default", { force: true });
+    }
+  }
+  musicLoadListener = () => {
+    musicLoadListener = null;
+    musicCycleTimer = window.setTimeout(finishCycle, MUSIC_GIF_DURATION_MS);
+  };
+  musicErrorListener = () => {
+    musicPlaybackState = "unknown";
+    setPetState("default", { force: true });
+  };
+  pet.addEventListener("load", musicLoadListener, { once: true });
+  pet.addEventListener("error", musicErrorListener, { once: true });
+}
+
+function handleMusicState(state) {
+  if (!["playing", "paused", "idle", "blocked", "unknown"].includes(state)) return;
+  musicPlaybackState = state;
+
+  // Pause, stop, or unsupported output immediately restores the default pet.
+  if ((state === "paused" || state === "blocked" || state === "unknown") && currentState === "music") {
+    suppressHoverUntilLeave = isHovering;
+    setPetState("default", { force: true });
+  }
+  updateMusicAnimation();
+}
+
+function updateMusicAnimation() {
+  if (startupPlaying || scheduledPlaying || isPressing || isDragging || isScaling) return;
+  if (musicPlaybackState === "playing" && ["default", "hover"].includes(currentState)) {
+    setPetState("default", { force: true });
+  }
+}
+
+function updateScheduledAnimations(date = new Date()) {
+  const day = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  const time = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  const minute = date.getHours() * 60 + date.getMinutes();
+  const nightAnimation = NIGHTTIME_WINDOWS.find(item => minute >= item.start && minute < item.end);
+  const animation = nightAnimation || SCHEDULED_ANIMATIONS.find(item => item.time === time);
+  if (!animation) {
+    if (scheduledPlaying) stopScheduledAnimation();
+    return;
+  }
+  const slot = `${day} ${nightAnimation ? nightAnimation.effect : time}`;
+  if (failedScheduledSlot === slot || (scheduledPlaying && currentState === animation.effect)) return;
+  if (startupPlaying || isDragging || isPressing || isScaling || currentState === "taskComplete") return;
+  if (scheduledPlaying) stopScheduledAnimation(false);
+  playScheduledAnimation(animation, slot);
+}
+
+function stopScheduledAnimation(restore = true) {
+  if (scheduledErrorListener) pet.removeEventListener("error", scheduledErrorListener);
+  scheduledErrorListener = null;
+  scheduledPlaying = false;
+  if (!restore) return;
+  suppressHoverUntilLeave = isHovering;
+  setPetState("default", { force: true });
+  if (taskCompleteAfterScheduled) {
+    taskCompleteAfterScheduled = false;
+    playTaskComplete();
+  }
+}
+
+function playScheduledAnimation({ effect }, slot) {
+  clearClickEffect();
+  hideCloseTip();
+  scheduledErrorListener = () => {
+    failedScheduledSlot = slot;
+    stopScheduledAnimation();
+  };
+  pet.addEventListener("error", scheduledErrorListener, { once: true });
+  // Keep the asset displayed until its wall-clock window ends; GIFs loop natively.
+  setPetState(effect, { force: true });
+  scheduledPlaying = true;
+}
+
+function isKeyboardEffect(state) {
+  return state === "send" || state === "good" || state === "delete";
+}
+
+function clearKeyboardEffect() {
+  window.clearTimeout(keyboardTimer);
+  keyboardTimer = 0;
+  if (keyboardLoadListener) pet.removeEventListener("load", keyboardLoadListener);
+  if (keyboardErrorListener) pet.removeEventListener("error", keyboardErrorListener);
+  keyboardLoadListener = null;
+  keyboardErrorListener = null;
+}
+
+function handleKeyboardEffect(action) {
+  if (!isKeyboardEffect(action?.effect)) return;
+  const { effect, pressed } = action;
+  keyboardPressed[effect] = Boolean(pressed);
+  // Key release and auto-repeat never reset the animation or cut a cycle short.
+  if (!pressed || currentState === effect) return;
+  if (startupPlaying || scheduledPlaying || isDragging || isPressing || isScaling || currentState === "taskComplete") return;
+  clearClickEffect();
+  clearKeyboardEffect();
+  hideCloseTip();
+  setPetState(effect, { force: true });
+  const finish = () => {
+    if (currentState !== effect) return;
+    suppressHoverUntilLeave = isHovering;
+    setPetState("default", { force: true });
+  };
+  let completedCycles = 0;
+  function finishCycle() {
+    if (currentState !== effect) return;
+    completedCycles++;
+    if (effect === "good" ? completedCycles < GOOD_PLAY_COUNT : keyboardPressed[effect]) {
+      keyboardTimer = window.setTimeout(finishCycle, KEYBOARD_GIF_DURATION_MS[effect]);
+    } else {
+      finish();
+    }
+  }
+  keyboardLoadListener = () => {
+    keyboardLoadListener = null;
+    keyboardTimer = window.setTimeout(finishCycle, KEYBOARD_GIF_DURATION_MS[effect]);
+  };
+  keyboardErrorListener = finish;
+  pet.addEventListener("load", keyboardLoadListener, { once: true });
+  pet.addEventListener("error", keyboardErrorListener, { once: true });
+}
+
+function playStartupAnimation() {
+  if (startupPlayed) return;
+  startupPlayed = true;
+  startupPlaying = true;
+  let startupTimer = 0;
+  const finish = () => {
+    window.clearTimeout(startupTimer);
+    pet.removeEventListener("load", onLoad);
+    pet.removeEventListener("error", finish);
+    startupPlaying = false;
+    suppressHoverUntilLeave = isHovering;
+    setPetState("default", { force: true });
+    if (taskCompleteAfterStartup) {
+      taskCompleteAfterStartup = false;
+      playTaskComplete();
+    }
+  };
+  const onLoad = () => {
+    applyScale(scale);
+    startupTimer = window.setTimeout(finish, STARTUP_GIF_DURATION_MS);
+  };
+  pet.addEventListener("load", onLoad, { once: true });
+  pet.addEventListener("error", finish, { once: true });
+  setPetState("startup", { force: true });
+}
+
+function isMealtime(date = new Date()) {
+  const minute = date.getHours() * 60 + date.getMinutes();
+  return MEALTIME_WINDOWS.some(([start, end]) => minute >= start && minute < end);
+}
+
+function updateMealtime() {
+  if (isMealtime()) {
+    if (currentState === "default" || currentState === "hover" || currentState === "music") {
+      hideCloseTip();
+      setPetState("mealtime", { force: true });
+    }
+  } else if (currentState === "mealtime") {
+    suppressHoverUntilLeave = isHovering;
+    setPetState("default", { force: true });
+  }
+}
+
+function clearScrollEffect() {
+  window.clearTimeout(scrollTimer);
+  scrollTimer = 0;
+  if (scrollLoadListener) {
+    pet.removeEventListener("load", scrollLoadListener);
+    scrollLoadListener = null;
+  }
+}
+
+function playScrollEffect() {
+  if (startupPlaying || scheduledPlaying) return;
+  if (isDragging || isPressing || isScaling || currentState === "taskComplete") return;
+  lastScrollTime = performance.now();
+  // More wheel events extend playback without restarting the GIF mid-cycle.
+  if (currentState === "scroll") return;
+  clearClickEffect();
+  hideCloseTip();
+  scrollLoadListener = () => {
+    scrollLoadListener = null;
+    function finishCycle() {
+      if (currentState !== "scroll") return;
+      if (performance.now() - lastScrollTime < SCROLL_IDLE_MS) {
+        scrollTimer = window.setTimeout(finishCycle, SCROLL_GIF_DURATION_MS);
+        return;
+      }
+      suppressHoverUntilLeave = isHovering;
+      setPetState("default", { force: true });
+    }
+    scrollTimer = window.setTimeout(finishCycle, SCROLL_GIF_DURATION_MS);
+  };
+  pet.addEventListener("load", scrollLoadListener, { once: true });
+  setPetState("scroll", { force: true });
 }
 
 function movePetWindow(event) {
-  window.nuphyPetWindow?.moveTo({
+  window.linePuppyWindow?.moveTo({
     x: event.screenX - dragOffset.x,
     y: event.screenY - dragOffset.y,
     petBounds: getPetBoundsInWindow(),
@@ -87,7 +383,7 @@ function setIgnoreMouseEvents(ignore) {
   }
 
   ignoreMouseEvents = ignore;
-  window.nuphyPetWindow?.setIgnoreMouseEvents?.(ignore);
+  window.linePuppyWindow?.setIgnoreMouseEvents?.(ignore);
 }
 
 function updatePointerPassthrough(event) {
@@ -115,6 +411,14 @@ function getPetBoundsInWindow() {
 }
 
 function playTaskComplete() {
+  if (scheduledPlaying) {
+    taskCompleteAfterScheduled = true;
+    return;
+  }
+  if (startupPlaying) {
+    taskCompleteAfterStartup = true;
+    return;
+  }
   window.clearTimeout(taskCompleteTimer);
   hideCloseTip();
   setPetState("taskComplete", { force: true });
@@ -126,8 +430,8 @@ function playTaskComplete() {
 }
 
 function playHeartEffect() {
+  if (startupPlaying || scheduledPlaying) return;
   clearClickEffect();
-  clearLegacyClickEffects();
   hideCloseTip();
   setPetState("click", { force: true });
 
@@ -140,20 +444,14 @@ function playHeartEffect() {
 }
 
 function playJumpEffect() {
+  if (startupPlaying || scheduledPlaying) return;
   clearClickEffect();
-  clearLegacyClickEffects();
   setPetState("hover", { force: true });
 }
 
 function clearClickEffect() {
   window.clearTimeout(clickTimer);
   clickTimer = 0;
-}
-
-function clearLegacyClickEffects() {
-  document
-    .querySelectorAll("#heart-layer, .heart, .heart-effect, .particle, .click-effect, .love-effect, [data-click-effect]")
-    .forEach((node) => node.remove());
 }
 
 function applyScale(nextScale) {
@@ -182,7 +480,7 @@ function applyScale(nextScale) {
   }
 
   lastWindowSize = nextWindowSize;
-  window.nuphyPetWindow?.resize(nextWindowSize);
+  window.linePuppyWindow?.resize(nextWindowSize);
 }
 
 function clamp(value, min, max) {
@@ -190,6 +488,9 @@ function clamp(value, min, max) {
 }
 
 function restoreAfterTransientState() {
+  if (currentState === "music") return;
+  if (isKeyboardEffect(currentState)) return;
+  if (currentState === "scroll") return;
   if (currentState === "taskComplete" && taskCompleteTimer) {
     return;
   }
@@ -198,7 +499,7 @@ function restoreAfterTransientState() {
     return;
   }
 
-  setPetState(isHovering ? "hover" : "default", { force: true });
+  setPetState(isMealtime() ? "mealtime" : (musicPlaybackState === "playing" ? "music" : (isHovering ? "hover" : "default")), { force: true });
 }
 
 function enterHover() {
@@ -213,7 +514,7 @@ function enterHover() {
 
   isHovering = true;
 
-  if (!isDragging && currentState !== "click" && currentState !== "taskComplete") {
+  if (!isDragging && !isMealtime() && !isKeyboardEffect(currentState) && currentState !== "music" && currentState !== "click" && currentState !== "taskComplete" && currentState !== "scroll") {
     playJumpEffect();
   }
 }
@@ -309,7 +610,7 @@ hitArea.addEventListener("mousedown", (event) => {
     y: event.screenY - window.screenY,
   };
   setIgnoreMouseEvents(false);
-  window.nuphyPetWindow?.startDrag?.();
+  window.linePuppyWindow?.startDrag?.();
 });
 
 window.addEventListener("mousemove", (event) => {
@@ -326,7 +627,6 @@ window.addEventListener("mousemove", (event) => {
     isDragging = true;
     hideCloseTip();
     clearClickEffect();
-    clearLegacyClickEffects();
     setPetState("drag", { force: true });
   }
 
@@ -339,7 +639,7 @@ window.addEventListener("mouseup", () => {
   const completedDrag = isDragging;
   isPressing = false;
   isDragging = false;
-  window.nuphyPetWindow?.endDrag?.();
+  window.linePuppyWindow?.endDrag?.();
 
   if (!completedDrag) return;
 
@@ -365,7 +665,7 @@ hitArea.addEventListener("contextmenu", (event) => {
 
 closeTip.addEventListener("click", (event) => {
   event.stopPropagation();
-  window.nuphyPetWindow?.close();
+  window.linePuppyWindow?.close();
 });
 
 ["mousedown", "mouseup", "click", "dblclick", "pointerdown", "pointerup", "contextmenu"].forEach((eventName) => {
@@ -422,11 +722,25 @@ scaleHandle.addEventListener("pointerdown", (event) => {
   scaleHandle.addEventListener("pointercancel", stopDragScale);
 });
 
-window.nuphyPetWindow?.onTaskComplete(() => {
+window.linePuppyWindow?.onTaskComplete(() => {
   playTaskComplete();
 });
 
-window.NUPHYPet = {
+window.linePuppyWindow?.onScroll?.(playScrollEffect);
+window.linePuppyWindow?.onKeyboardEffect?.(handleKeyboardEffect);
+window.linePuppyWindow?.onMusicState?.(handleMusicState);
+
+// Recheck wall-clock time so startup, sleep/resume, and clock changes are handled.
+playStartupAnimation();
+updateMealtime();
+updateScheduledAnimations();
+window.setInterval(() => {
+  updateMealtime();
+  updateScheduledAnimations();
+  updateMusicAnimation();
+}, 1000);
+
+window.linePuppy = {
   playTaskComplete,
   playHeartEffect,
   playJumpEffect,

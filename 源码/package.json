@@ -1,19 +1,13 @@
 {
-  "name": "nuphy-line-dog-desktop-pet",
-  "version": "1.1.0",
+  "name": "line-puppy-desktop-pet",
+  "version": "1.1.1",
   "private": true,
-  "description": "Independent NUPHY desktop pet using native GIF playback.",
+  "description": "line puppy desktop pet using native GIF playback.",
   "author": "remake1026",
   "main": "main.js",
-  "files": [
-    "assets/**/*",
-    "index.html",
-    "main.js",
-    "pet.js",
-    "preload.js",
-    "styles.css"
-  ],
   "scripts": {
+    "build:scroll-listener": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File native/build-scroll-listener.ps1",
+    "predist:win": "npm run build:scroll-listener",
     "start": "electron .",
     "task-complete": "electron . --task-complete",
     "dist:win": "electron-builder --win nsis --x64 --ia32 --publish never",
@@ -21,7 +15,7 @@
   },
   "build": {
     "appId": "io.github.remake1026.desktop-pets",
-    "productName": "线条小狗",
+    "productName": "line puppy",
     "directories": {
       "output": "../dist/standard",
       "buildResources": "installer-resources"
@@ -55,7 +49,7 @@
       ],
       "icon": "installer-resources/icon.png",
       "category": "public.app-category.entertainment",
-      "artifactName": "LineDog-${version}-Mac-${arch}.${ext}",
+      "artifactName": "line puppy-${version}-Mac-${arch}.${ext}",
       "identity": null,
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
@@ -65,8 +59,8 @@
       }
     },
     "dmg": {
-      "title": "线条小狗 ${version}",
-      "artifactName": "LineDog-${version}-Mac-${arch}.${ext}",
+      "title": "line puppy ${version}",
+      "artifactName": "line puppy-${version}-Mac-${arch}.${ext}",
       "icon": "installer-resources/icon.png",
       "iconSize": 80,
       "contents": [
@@ -84,10 +78,14 @@
       ]
     },
     "win": {
+      "extraResources": [
+        { "from": "native/ScrollListener.exe", "to": "native/ScrollListener.exe" },
+        { "from": "native/MusicListener.exe", "to": "native/MusicListener.exe" }
+      ],
       "target": "nsis",
       "icon": "installer-resources/icon.ico",
-      "executableName": "线条小狗",
-      "artifactName": "LineDog-${version}-Win10-11-Setup.${ext}",
+      "executableName": "line puppy",
+      "artifactName": "line puppy-${version}-Win10-11-Setup.${ext}",
       "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
@@ -103,8 +101,8 @@
       "language": "2052",
       "createDesktopShortcut": false,
       "createStartMenuShortcut": true,
-      "shortcutName": "线条小狗",
-      "uninstallDisplayName": "线条小狗",
+      "shortcutName": "line puppy",
+      "uninstallDisplayName": "line puppy",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false
     }
