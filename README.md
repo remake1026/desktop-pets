@@ -8,7 +8,7 @@
 
 当前版本为 **v1.1.1**。
 
-**[下载 Windows 10 / 11 安装包](https://github.com/remake1026/desktop-pets/releases/download/v1.1.1/line%20puppy-1.1.1-Win10-11-Setup.exe)** · [查看最新发布](https://github.com/remake1026/desktop-pets/releases/latest)
+**[下载 Windows 10 / 11 安装包](https://github.com/remake1026/desktop-pets/releases/download/v1.1.1-windows/line%20puppy-1.1.1-Win10-11-Setup.exe)** · [查看最新发布](https://github.com/remake1026/desktop-pets/releases/latest)
 
 ## 互动展示
 
@@ -68,7 +68,7 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 
 | 最新安装包 | 系统 | 架构 |
 | --- | --- | --- |
-| [line puppy v1.1.1](https://github.com/remake1026/desktop-pets/releases/download/v1.1.1/line%20puppy-1.1.1-Win10-11-Setup.exe)（约 182 MB） | Windows 10、Windows 11 | 自动选择 x86 / x64 |
+| [line puppy v1.1.1](https://github.com/remake1026/desktop-pets/releases/download/v1.1.1-windows/line%20puppy-1.1.1-Win10-11-Setup.exe)（约 182 MB） | Windows 10、Windows 11 | 自动选择 x86 / x64 |
 
 1. 下载并双击安装包；旧版正在运行时，请先从托盘菜单退出。
 2. 选择安装范围和安装位置，再选择是否创建桌面快捷方式、是否开机自启动。
