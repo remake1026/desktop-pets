@@ -1,4 +1,4 @@
-# line puppy
+# 小狗桌宠
 
 ![桌面萌宠预览](docs/images/readme-hero.png)
 
