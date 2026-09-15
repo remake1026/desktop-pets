@@ -136,7 +136,7 @@ if (!process.versions.electron) {
       await evaluate("window.ScheduledMinute = 22; updateScheduledAnimations()");
       assert.equal(await evaluate("currentState"), "default");
       console.log("PASS: 520/521 real GIFs loop past one cycle, switch by minute, and return to default");
-      for (const [hour, state, asset] of [[23, 'sleep', 'sleepy.gif'], [0, 'sleep2', 'sleepy2.png'], [2, 'default', 'sleep.gif']]) {
+      for (const [hour, state, asset] of [[23, 'sleep', 'sleepy.gif'], [0, 'sleep2', 'sleepy2.gif'], [2, 'default', 'sleep.gif']]) {
         await evaluate(`window.Date = class extends RealDate { getHours() { return ${hour}; } getMinutes() { return 0; } }; updateScheduledAnimations();`);
         await wait(150);
         assert.equal(await evaluate('currentState'), state);

@@ -14,7 +14,7 @@ const animations = {
   love521: "assets/521.gif",
   music: "assets/music.gif",
   sleep: "assets/sleepy.gif",
-  sleep2: "assets/sleepy2.png",
+  sleep2: "assets/sleepy2.gif",
 };
 
 const priority = {

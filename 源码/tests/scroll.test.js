@@ -222,7 +222,7 @@ test("nighttime windows use sleepy and sleepy2 assets", () => {
   f.time(23, 0); assert.equal(f.state(), "sleep");
   assert.match(f.pet.src, /assets\/sleepy\.gif/);
   f.time(0, 0); assert.equal(f.state(), "sleep2");
-  assert.match(f.pet.src, /assets\/sleepy2\.png/);
+  assert.match(f.pet.src, /assets\/sleepy2\.gif/);
   f.time(2, 0); assert.equal(f.state(), "default");
 });
 
