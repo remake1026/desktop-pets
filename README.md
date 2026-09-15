@@ -6,9 +6,12 @@
 
 一个基于 Electron 的桌面萌宠。小狗会悬浮在桌面上，根据鼠标、键盘、时间和软件状态播放不同动画，也可以拖动、缩放和设置开机自启动。
 
-当前版本为 **V.1.2.1**。
+当前版本为 **V.1.2.2**。
 
-**[下载 Windows 10 / 11 安装包](https://github.com/remake1026/desktop-pets/releases/download/V.1.2.1/line.puppy-V.1.2.1-Win10-11-Setup.exe)** · [查看最新发布](https://github.com/remake1026/desktop-pets/releases/latest)
+## 下载
+
+[![Download for Windows](https://img.shields.io/badge/Download-Windows-blue?logo=windows)](https://github.com/remake1026/desktop-pets/releases/latest)
+
 
 ## 互动展示
 
