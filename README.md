@@ -10,7 +10,7 @@
 
 ## 下载
 
-[![Download for Windows](https://img.shields.io/badge/Download-Windows-blue?logo=windows)](https://github.com/remake1026/desktop-pets/releases/latest)
+[下载最新版 line puppy](https://github.com/remake1026/desktop-pets/releases/latest)
 
 
 ## 互动展示
