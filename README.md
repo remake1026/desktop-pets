@@ -1,4 +1,4 @@
-# 小狗桌宠
+# 幸福是一只小狗～
 
 ![桌面萌宠预览](docs/images/readme-hero.png)
 
