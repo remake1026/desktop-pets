@@ -21,7 +21,7 @@
 | 默认 | 鼠标悬停 | 鼠标点击 | 鼠标拖拽 | 滚动滚轮 |
 | :---: | :---: | :---: | :---: | :---: |
 | <img src="源码/assets/sleep.gif" width="150" alt="默认睡觉动画" /> | <img src="源码/assets/jump.gif" width="150" alt="鼠标悬停动画" /> | <img src="源码/assets/heart.gif" width="150" alt="鼠标点击动画" /> | <img src="源码/assets/special.gif" width="150" alt="鼠标拖拽动画" /> | <img src="源码/assets/scroll.gif" width="150" alt="鼠标滚轮动画" /> |
-| 不操作时安静睡觉。 | 指针移到小狗身上时跳跃。 | 左键点击时播放爱心动画。 | 按住左键拖动小狗到新位置。 | Windows 中滚动鼠标滚轮时播放滚动动画。 |
+| 不操作时安静睡陪伴。 | 指针移到小狗身上时跳跃。 | 左键点击时播放爱心动画。 | 按住左键拖动小狗到新位置。 | Windows 中滚动鼠标滚轮时播放滚动动画。 |
 
 ### 键盘部分
 
