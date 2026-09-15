@@ -32,8 +32,8 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 
 | 用餐时间 | 5:20 / 17:20 | 5:21 / 17:21 | 23:00–24:00 | 00:00–02:00 |
 | :---: | :---: | :---: | :---: | :---: |
-| <img src="源码/assets/mealtime.gif" width="150" alt="用餐时间动画" /> | <img src="源码/assets/520.gif" width="150" alt="520 定时动画" /> | <img src="源码/assets/521.gif" width="150" alt="521 定时动画" /> | <img src="源码/assets/sleepy.gif" width="150" alt="深夜睡觉动画" /> | <img src="源码/assets/sleepy2.gif" width="150" alt="凌晨熟睡动画" /> |
-| 每天 09:30–10:10、12:00–13:00、20:00–21:00。 | 每天 05:20 和 17:20 播放 520 动画。 | 每天 05:21 和 17:21 播放 521 动画。 | 深夜进入困倦状态。 | 凌晨进入熟睡状态。 |
+| <img src="源码/assets/mealtime.gif" width="150" alt="用餐时间动画" /> | <img src="源码/assets/520.gif" width="150" alt="520 定时动画" /> | <img src="源码/assets/521.gif" width="150" alt="521 定时动画" /> | <img src="源码/assets/sleepy.gif" width="150" alt="深夜睡觉动画" /> | <img src="源码/assets/sleepy2.gif" width="150" alt="凌晨趴睡动画" /> |
+| 每天 09:30–10:10、12:00–13:00、20:00–21:00。 | 每天 05:20 和 17:20 播放 520 动画。 | 每天 05:21 和 17:21 播放 521 动画。 | 深夜进入困倦状态。 | 凌晨小狗趴下熟睡。 |
 
 定时互动按电脑的本地时间自动触发。
 
