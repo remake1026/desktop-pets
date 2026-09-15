@@ -284,9 +284,20 @@ function getWindowsLoginOptions() {
   };
 }
 
+// getLoginItemSettings re-parses `path` as a command line instead of treating
+// it as a plain program path. When the install directory contains spaces
+// (e.g. "D:\apps\line puppy"), an unquoted path is truncated at the first
+// space and never matches the registry entry, so launchItems comes back
+// empty. Quote the program path for read calls only; write calls must stay
+// unquoted because FormatCommandLineString adds the quotes itself.
+function getWindowsLoginQueryOptions() {
+  const options = getWindowsLoginOptions();
+  return { ...options, path: `"${options.path}"` };
+}
+
 function repairWindowsLoginItem() {
   const options = getWindowsLoginOptions();
-  const items = app.getLoginItemSettings(options).launchItems;
+  const items = app.getLoginItemSettings(getWindowsLoginQueryOptions()).launchItems;
   // Historical registry identifier only; never used for new entries or UI.
   const legacyName = String.fromCodePoint(0x7ebf, 0x6761, 0x5c0f, 0x72d7);
   const legacyItem = items.find(item => item.name === legacyName && item.scope === "user");
@@ -337,7 +348,7 @@ function startMusicListener() {
 
 function isStartupEnabled() {
   if (isWindows) {
-    const settings = app.getLoginItemSettings(getWindowsLoginOptions());
+    const settings = app.getLoginItemSettings(getWindowsLoginQueryOptions());
     return settings.launchItems.some((item) => item.name === startupEntryName && item.enabled);
   }
   return Boolean(app.getLoginItemSettings().openAtLogin);
