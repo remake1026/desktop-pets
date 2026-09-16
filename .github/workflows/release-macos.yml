@@ -36,12 +36,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Attach to existing v1.2.2 Release
+      - name: Publish macOS release
         if: github.event_name != 'release'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.2
-          name: line puppy v1.2.2
+          tag_name: v1.2.2-mac
+          name: line puppy v1.2.2 macOS (Apple Silicon)
+          make_latest: "false"
+          body: |
+            macOS Apple Silicon 版（M1 / M2 / M3 / M4 等 arm64 机型，macOS 12 Monterey 及以上）。
+            打开 DMG 后将 line puppy 拖入 Applications 即可安装。
+            首次打开若提示无法验证开发者，按住 Control 点击应用并选择“打开”，或执行 `xattr -cr "/Applications/line puppy.app"`。
           files: |
             dist/standard/line puppy-*-Mac-arm64.dmg
             dist/standard/line puppy-*-Mac-arm64.zip
