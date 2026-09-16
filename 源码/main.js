@@ -18,6 +18,7 @@ let pendingTaskComplete = false;
 let nativeDragOffset = null;
 let ignoringMouseEvents = null;
 let scrollListener = null;
+let macInputListener = null;
 let musicListener = null;
 let musicState = "idle";
 
@@ -66,7 +67,7 @@ if (!lock) {
     }
 
     createPetWindow();
-    if (isMac) registerMacSaveShortcut();
+    if (isMac && !startMacInputListener()) registerMacSaveShortcut();
     if (isWindows) startGlobalScrollListener();
     if (isWindows) startMusicListener();
 
@@ -88,6 +89,10 @@ if (!lock) {
     if (scrollListener) {
       scrollListener.kill();
       scrollListener = null;
+    }
+    if (macInputListener) {
+      macInputListener.kill();
+      macInputListener = null;
     }
     if (tray) {
       tray.destroy();
@@ -143,6 +148,36 @@ function startGlobalScrollListener() {
     child = listener;
     scrollListener = listener;
   });
+}
+
+function startMacInputListener() {
+  const helperPath = app.isPackaged
+    ? path.join(process.resourcesPath, "native", "MacInputListener")
+    : path.join(__dirname, "native", "MacInputListener");
+
+  if (!fs.existsSync(helperPath)) {
+    console.warn("Mac input listener is not built; using the Command+S fallback.");
+    return false;
+  }
+
+  let child;
+  child = startNativeListener(helperPath, "Mac input listener", (line) => {
+    if (!petWindow || petWindow.isDestroyed()) return;
+    if (line === "wheel") {
+      petWindow.webContents.send("pet:scroll");
+      return;
+    }
+    const match = /^(send|good|delete|undo)-(down|up)$/.exec(line);
+    if (match) {
+      petWindow.webContents.send("pet:keyboard-effect", { effect: match[1], pressed: match[2] === "down" });
+    }
+  }, () => {
+    if (macInputListener === child) macInputListener = null;
+  }, undefined, (listener) => {
+    child = listener;
+    macInputListener = listener;
+  });
+  return true;
 }
 
 function createPetWindow() {

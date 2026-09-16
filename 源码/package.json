@@ -1,17 +1,19 @@
 {
   "name": "line-puppy-desktop-pet",
-  "version": "1.2.2",
+  "version": "2.0.0",
   "private": true,
   "description": "line puppy desktop pet using native GIF playback.",
   "author": "remake1026",
   "main": "main.js",
   "scripts": {
     "build:scroll-listener": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File native/build-scroll-listener.ps1",
+    "build:mac-input-listener": "bash native/build-mac-input-listener.sh",
     "predist:win": "npm run build:scroll-listener",
+    "predist:mac": "npm run build:mac-input-listener",
     "start": "electron .",
     "task-complete": "electron . --task-complete",
     "dist:win": "electron-builder --win nsis --x64 --ia32 --publish never",
-    "dist:mac": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg zip --arm64 --publish never"
+    "dist:mac": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg zip --universal --publish never"
   },
   "build": {
     "appId": "io.github.remake1026.desktop-pets",
@@ -34,18 +36,8 @@
     ],
     "mac": {
       "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "arm64"
-          ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "arm64"
-          ]
-        }
+        "dmg",
+        "zip"
       ],
       "icon": "installer-resources/icon.png",
       "category": "public.app-category.entertainment",
@@ -59,6 +51,9 @@
         "LSMinimumSystemVersion": "12.0"
       }
     },
+    "extraResources": [
+      { "from": "native/MacInputListener", "to": "native/MacInputListener" }
+    ],
     "dmg": {
       "title": "line puppy ${version}",
       "artifactName": "line puppy-${version}-Mac-${arch}.${ext}",
@@ -86,7 +81,7 @@
       "target": "nsis",
       "icon": "installer-resources/icon.ico",
       "executableName": "line puppy",
-      "artifactName": "line puppy-${version}-Win10-11-Setup.${ext}",
+      "artifactName": "V${version}.${ext}",
       "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
