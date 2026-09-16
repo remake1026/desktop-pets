@@ -90,7 +90,7 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 ### macOS（Apple Silicon）
 
 macOS 当前版本为 v1.2.2，仅支持 Apple Silicon（M 系列芯片）Mac，系统要求 macOS 12 Monterey 或更新。
-
+注意！！mac版本Command+S 会覆盖软件原本的保存功能！需要关闭桌宠程序才可恢复！！（修复中)
 使用 Homebrew：
 
 ```bash
