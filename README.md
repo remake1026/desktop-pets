@@ -91,7 +91,7 @@ brew tap remake1026/desktop-pets https://github.com/remake1026/desktop-pets.git
 brew install --cask line-dog
 ```
 
-也可以[下载 DMG](https://github.com/remake1026/desktop-pets/releases/download/v1.2.2-mac/line%20puppy-1.2.2-Mac-arm64.dmg)，打开后将应用拖入 **Applications**。首次打开若提示无法验证开发者，请按住 Control 点击应用并选择“打开”，或执行：
+也可以[下载 DMG](https://github.com/remake1026/desktop-pets/releases/download/v1.2.2-mac/line.puppy-1.2.2-Mac-arm64.dmg)，打开后将应用拖入 **Applications**。首次打开若提示无法验证开发者，请按住 Control 点击应用并选择“打开”，或执行：
 
 ```bash
 xattr -cr "/Applications/line puppy.app"
