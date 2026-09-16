@@ -82,7 +82,7 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 
 ### macOS（Apple Silicon）
 
-macOS 当前版本为 v1.1.0，支持 Ventura 13 或更新系统。
+macOS 当前版本为 v1.2.2，仅支持 Apple Silicon（M 系列芯片）Mac，系统要求 macOS 12 Monterey 或更新。
 
 使用 Homebrew：
 
@@ -91,7 +91,7 @@ brew tap remake1026/desktop-pets https://github.com/remake1026/desktop-pets.git
 brew install --cask line-dog
 ```
 
-也可以[下载 DMG](https://github.com/remake1026/desktop-pets/releases/download/v1.1.0/LineDog-1.1.0-Mac-arm64.dmg)，打开后将应用拖入 **Applications**。首次打开若提示无法验证开发者，请按住 Control 点击应用并选择“打开”，或执行：
+也可以[下载 DMG](https://github.com/remake1026/desktop-pets/releases/download/v1.2.2/line%20puppy-1.2.2-Mac-arm64.dmg)，打开后将应用拖入 **Applications**。首次打开若提示无法验证开发者，请按住 Control 点击应用并选择“打开”，或执行：
 
 ```bash
 xattr -cr "/Applications/line puppy.app"

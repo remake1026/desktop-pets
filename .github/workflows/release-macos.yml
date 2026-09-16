@@ -3,6 +3,8 @@ name: Release macOS
 on:
   release:
     types: [published]
+  push:
+    branches: [mac-build]
   workflow_dispatch:
 
 permissions:
@@ -28,6 +30,18 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
+          files: |
+            dist/standard/line puppy-*-Mac-arm64.dmg
+            dist/standard/line puppy-*-Mac-arm64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attach to existing v1.2.2 Release
+        if: github.event_name != 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.2.2
+          name: line puppy v1.2.2
           files: |
             dist/standard/line puppy-*-Mac-arm64.dmg
             dist/standard/line puppy-*-Mac-arm64.zip

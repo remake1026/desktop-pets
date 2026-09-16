@@ -55,7 +55,8 @@
       "gatekeeperAssess": false,
       "extendInfo": {
         "LSUIElement": true,
-        "NSHighResolutionCapable": true
+        "NSHighResolutionCapable": true,
+        "LSMinimumSystemVersion": "12.0"
       }
     },
     "dmg": {
