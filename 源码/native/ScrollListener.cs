@@ -114,8 +114,8 @@ internal sealed class ScrollListener : NativeWindow, IDisposable
 internal sealed class KeyboardShortcuts
 {
     private readonly Action<string> emit;
-    private bool leftControl, rightControl, letterS, enter, numpadEnter, deleteKey, numpadDelete, backspace;
-    private bool sending, saving, deleting;
+    private bool leftControl, rightControl, letterS, letterZ, enter, numpadEnter, deleteKey, numpadDelete, backspace;
+    private bool sending, saving, deleting, undoing;
 
     internal KeyboardShortcuts(Action<string> emitAction) { emit = emitAction; }
 
@@ -129,6 +129,7 @@ internal sealed class KeyboardShortcuts
             case 0xA2: leftControl = down; break;
             case 0xA3: rightControl = down; break;
             case 0x53: letterS = down; break;
+            case 0x5A: letterZ = down; break;
             case 0x0D: if (extended) numpadEnter = down; else enter = down; break;
             case 0x2E: if (extended) deleteKey = down; else numpadDelete = down; break;
             case 0x08: backspace = down; break;
@@ -137,8 +138,10 @@ internal sealed class KeyboardShortcuts
         bool nextSending = enter || numpadEnter;
         bool nextSaving = letterS && (leftControl || rightControl);
         bool nextDeleting = deleteKey || numpadDelete || backspace;
+        bool nextUndoing = letterZ && (leftControl || rightControl);
         if (nextSending != sending) { sending = nextSending; emit(sending ? "send-down" : "send-up"); }
         if (nextSaving != saving) { saving = nextSaving; emit(saving ? "good-down" : "good-up"); }
         if (nextDeleting != deleting) { deleting = nextDeleting; emit(deleting ? "delete-down" : "delete-up"); }
+        if (nextUndoing != undoing) { undoing = nextUndoing; emit(undoing ? "undo-down" : "undo-up"); }
     }
 }

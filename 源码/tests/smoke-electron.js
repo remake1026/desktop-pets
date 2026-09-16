@@ -66,6 +66,7 @@ if (!process.versions.electron) {
       assert.equal(api.getTray().isDestroyed(), false);
       const menu = api.buildUtilityMenu(true);
       const startup = menu.find(item => item.type === "checkbox");
+      assert.notEqual(menu.find(item => item.label === "清除缓存")?.enabled, false);
       assert.notEqual(startup.enabled, false);
       startup.click({ checked: true });
       const loginOptions = api.getWindowsLoginOptions();

@@ -59,7 +59,7 @@ function fixture({ includeStartup = false } = {}) {
     run: code => vm.runInContext(code, context),
     state: () => vm.runInContext("currentState", context),
     pet: element("#pet"), hit: element("#pet-hit-area"),
-    time(hour, minute) { minuteOfDay = hour * 60 + minute; vm.runInContext("updateMealtime(); updateScheduledAnimations()", context); },
+    time(hour, minute) { minuteOfDay = hour * 60 + minute; vm.runInContext("updateMealtime(); updateTimedInteractions(); updateScheduledAnimations()", context); },
     day(day) { dayOfMonth = day; },
     wheel() { onScroll(); },
     key(effect, pressed) { onKeyboardEffect({ effect, pressed }); },
@@ -169,8 +169,8 @@ test("local pet clicks retain drag suppression", () => {
   f.advance(1440); assert.equal(f.state(), "default");
 });
 
-test("Enter, Ctrl+S, and Delete release finish their full GIF, including load time", () => {
-  for (const [effect, duration] of [["send", 1740], ["good", 2000], ["delete", 1840]]) {
+test("Enter, Ctrl+S, Delete, and Ctrl+Z finish their full GIF, including load time", () => {
+  for (const [effect, duration] of [["send", 1740], ["good", 2000], ["delete", 1840], ["undo", 2000]]) {
     const f = fixture(); f.key(effect, true); f.advance(100); f.key(effect, false);
     assert.equal(f.state(), effect);
     f.load(); f.hit.emit("mouseenter"); f.advance(duration - 1);
@@ -224,6 +224,58 @@ test("nighttime windows use sleepy and sleepy2 assets", () => {
   f.time(0, 0); assert.equal(f.state(), "sleep2");
   assert.match(f.pet.src, /assets\/sleepy2\.gif/);
   f.time(2, 0); assert.equal(f.state(), "default");
+});
+
+test("Ctrl+Z always plays exactly one cycle, even when held", () => {
+  const f = fixture(); f.key("undo", true); f.load();
+  f.advance(1999); assert.equal(f.state(), "undo");
+  f.advance(1); assert.equal(f.state(), "default");
+  f.key("undo", false);
+});
+
+test("nighttime assets yield to interactions and resume for the remaining window", () => {
+  const f = fixture(); f.time(23, 0);
+  f.hit.emit("click"); assert.equal(f.state(), "click");
+  f.time(23, 0); assert.equal(f.state(), "click");
+  f.advance(1440); assert.equal(f.state(), "sleep");
+
+  f.wheel(); f.load(); assert.equal(f.state(), "scroll");
+  f.time(23, 0); assert.equal(f.state(), "scroll");
+  f.advance(1440); assert.equal(f.state(), "sleep");
+
+  f.key("send", true); f.load(); f.key("send", false); assert.equal(f.state(), "send");
+  f.advance(1740); assert.equal(f.state(), "sleep");
+  f.hit.emit("mouseenter"); assert.equal(f.state(), "hover");
+  f.hit.emit("mouseleave", { clientX: 300, clientY: 300 }); assert.equal(f.state(), "sleep");
+
+  f.music("playing"); assert.equal(f.state(), "music");
+  f.music("paused"); assert.equal(f.state(), "sleep");
+
+  f.time(0, 0); assert.equal(f.state(), "sleep2");
+  f.run("playTaskComplete()"); assert.equal(f.state(), "taskComplete");
+  f.advance(4120); assert.equal(f.state(), "sleep2");
+
+  f.wheel(); f.load(); f.time(2, 0); assert.equal(f.state(), "scroll");
+  f.advance(1440); assert.equal(f.state(), "default");
+});
+
+test("morning timed interactions loop through their windows, yield to input, and then resume", () => {
+  const f = fixture();
+  f.time(10, 30); assert.equal(f.state(), "morningReading");
+  f.load(); f.advance(2520 * 3); assert.equal(f.state(), "morningReading");
+
+  f.hit.emit("click"); assert.equal(f.state(), "click");
+  f.time(10, 30); assert.equal(f.state(), "click");
+  f.advance(1440); assert.equal(f.state(), "morningReading");
+
+  f.time(10, 40); assert.equal(f.state(), "morningDrink");
+  f.load(); f.advance(800 * 3); assert.equal(f.state(), "morningDrink");
+  f.wheel(); assert.equal(f.state(), "scroll");
+  f.time(10, 40); assert.equal(f.state(), "scroll");
+  f.load(); f.advance(1440); assert.equal(f.state(), "morningDrink");
+  f.run("playTaskComplete()"); assert.equal(f.state(), "taskComplete");
+  f.advance(4120); assert.equal(f.state(), "morningDrink");
+  f.time(10, 50); assert.equal(f.state(), "default");
 });
 
 test("scheduled clips wait for startup and resist input until their time window ends", () => {

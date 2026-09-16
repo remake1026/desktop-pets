@@ -104,30 +104,44 @@ function registerMacSaveShortcut() {
   });
 }
 
-function startGlobalScrollListener() {
-  const helperPath = app.isPackaged
-    ? path.join(process.resourcesPath, "native", "ScrollListener.exe")
-    : path.join(__dirname, "native", "ScrollListener.exe");
+function startNativeListener(helperPath, label, onLine, onExit, onError, onStart) {
   const child = spawn(helperPath, [String(process.pid)], {
     windowsHide: true,
     stdio: ["ignore", "pipe", "pipe"],
   });
-  scrollListener = child;
+  onStart?.(child);
   const lines = createInterface({ input: child.stdout });
-  lines.on("line", (line) => {
+  lines.on("line", onLine);
+  child.stderr.on("data", (data) => console.error(`${label}:`, data.toString()));
+  child.on("error", (error) => {
+    console.error(`Unable to start ${label.toLowerCase()}:`, error);
+    onError?.(error);
+  });
+  child.on("exit", () => {
+    lines.close();
+    onExit(child);
+  });
+  return child;
+}
+
+function startGlobalScrollListener() {
+  const helperPath = app.isPackaged
+    ? path.join(process.resourcesPath, "native", "ScrollListener.exe")
+    : path.join(__dirname, "native", "ScrollListener.exe");
+  let child;
+  child = startNativeListener(helperPath, "Scroll listener", (line) => {
     if (!petWindow || petWindow.isDestroyed()) return;
     if (line === "wheel") {
       petWindow.webContents.send("pet:scroll");
     } else {
-      const match = /^(send|good|delete)-(down|up)$/.exec(line);
+      const match = /^(send|good|delete|undo)-(down|up)$/.exec(line);
       if (match) petWindow.webContents.send("pet:keyboard-effect", { effect: match[1], pressed: match[2] === "down" });
     }
-  });
-  child.stderr.on("data", (data) => console.error("Scroll listener:", data.toString()));
-  child.on("error", (error) => console.error("Unable to start scroll listener:", error));
-  child.on("exit", () => {
-    lines.close();
+  }, () => {
     if (scrollListener === child) scrollListener = null;
+  }, undefined, (listener) => {
+    child = listener;
+    scrollListener = listener;
   });
 }
 
@@ -328,21 +342,18 @@ function startMusicListener() {
   const helper = app.isPackaged
     ? path.join(process.resourcesPath, "native", "MusicListener.exe")
     : path.join(__dirname, "native", "MusicListener.exe");
-  const child = spawn(helper, [String(process.pid)], { windowsHide: true, stdio: ["ignore", "pipe", "pipe"] });
-  musicListener = child;
   const publish = (state) => {
     musicState = state;
     if (petWindow && !petWindow.isDestroyed()) petWindow.webContents.send("pet:music-state", state);
   };
-  const lines = createInterface({ input: child.stdout });
-  lines.on("line", (line) => {
+  let child;
+  child = startNativeListener(helper, "Music listener", (line) => {
     if (["playing", "paused", "idle", "blocked", "unknown"].includes(line)) publish(line);
-  });
-  child.stderr.on("data", (data) => console.error("Music listener:", data.toString()));
-  child.on("error", (error) => { console.error("Unable to start music listener:", error); publish("unknown"); });
-  child.on("exit", () => {
-    lines.close();
+  }, () => {
     if (musicListener === child) { musicListener = null; publish("unknown"); }
+  }, () => publish("unknown"), (listener) => {
+    child = listener;
+    musicListener = listener;
   });
 }
 
@@ -352,6 +363,19 @@ function isStartupEnabled() {
     return settings.launchItems.some((item) => item.name === startupEntryName && item.enabled);
   }
   return Boolean(app.getLoginItemSettings().openAtLogin);
+}
+
+async function clearAppCache() {
+  try {
+    await petWindow?.webContents.session.clearCache();
+    await dialog.showMessageBox({
+      type: "info",
+      title: "清除缓存",
+      message: "桌宠缓存已清除。",
+    });
+  } catch (error) {
+    dialog.showErrorBox("清除缓存失败", error.message);
+  }
 }
 
 function buildUtilityMenu(includeQuit) {
@@ -379,6 +403,11 @@ function buildUtilityMenu(includeQuit) {
         rebuildTrayMenu();
         if (isMac) createMacMenu();
       },
+    },
+    { type: "separator" },
+    {
+      label: "清除缓存",
+      click: clearAppCache,
     },
   ];
 

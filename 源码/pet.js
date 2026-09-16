@@ -10,8 +10,11 @@ const animations = {
   send: "assets/send.gif",
   good: "assets/good.gif",
   delete: "assets/delete.gif",
+  undo: "assets/undo.gif",
   love520: "assets/520.gif",
   love521: "assets/521.gif",
+  morningReading: "assets/morning-reading.gif",
+  morningDrink: "assets/morning-drink.gif",
   music: "assets/music.gif",
   sleep: "assets/sleepy.gif",
   sleep2: "assets/sleepy2.gif",
@@ -27,13 +30,16 @@ const priority = {
   send: 3,
   good: 3,
   delete: 3,
+  undo: 3,
   drag: 4,
   taskComplete: 5,
   startup: 6,
   love520: 6,
   love521: 6,
-  sleep: 6,
-  sleep2: 6,
+  morningReading: 1,
+  morningDrink: 1,
+  sleep: 1,
+  sleep2: 1,
 };
 
 const TASK_COMPLETE_GIF_DURATION_MS = 2060;
@@ -44,7 +50,7 @@ const STARTUP_GIF_DURATION_MS = 2900;
 // scroll.gif: 18 frames, 80 ms per frame.
 const SCROLL_GIF_DURATION_MS = 1440;
 const SCROLL_IDLE_MS = 160;
-const KEYBOARD_GIF_DURATION_MS = { send: 1740, good: 1000, delete: 1840 };
+const KEYBOARD_GIF_DURATION_MS = { send: 1740, good: 1000, delete: 1840, undo: 2000 };
 const GOOD_PLAY_COUNT = 2;
 const MUSIC_GIF_DURATION_MS = 1600;
 const SCHEDULED_ANIMATIONS = [
@@ -53,10 +59,14 @@ const SCHEDULED_ANIMATIONS = [
   { time: "05:21", effect: "love521" }, // 05:21:00–05:21:59
   { time: "17:21", effect: "love521" }, // 17:21:00–17:21:59
 ];
+const TIMED_INTERACTION_WINDOWS = [
+  { start: 10 * 60 + 30, end: 10 * 60 + 40, effect: "morningReading" },
+  { start: 10 * 60 + 40, end: 10 * 60 + 50, effect: "morningDrink" },
+];
 const MEALTIME_WINDOWS = [[9 * 60 + 30, 10 * 60 + 10], [12 * 60, 13 * 60], [20 * 60, 21 * 60]];
 const NIGHTTIME_WINDOWS = [
-  { start: 23 * 60, end: 24 * 60, effect: "sleep" },
-  { start: 0, end: 2 * 60, effect: "sleep2" },
+  { start: 23 * 60, end: 24 * 60, effect: "sleep", interruptible: true },
+  { start: 0, end: 2 * 60, effect: "sleep2", interruptible: true },
 ];
 const BASE_PET_WIDTH = 180;
 const BASE_HIT_AREA_WIDTH = 170;
@@ -87,16 +97,20 @@ let scrollPlaybackId = 0;
 let startupPlaying = false;
 let startupPlayed = false;
 let taskCompleteAfterStartup = false;
-const keyboardPressed = { send: false, good: false, delete: false };
+const keyboardPressed = Object.fromEntries(Object.keys(KEYBOARD_GIF_DURATION_MS).map(effect => [effect, false]));
 let keyboardTimer = 0;
 let keyboardLoadListener = null;
 let keyboardErrorListener = null;
 let keyboardPlaybackId = 0;
 let scheduledPlaying = false;
+let scheduledEffect = "";
+let scheduledInterruptible = false;
 let scheduledPlaybackId = 0;
 let scheduledErrorListener = null;
 let failedScheduledSlot = "";
 let taskCompleteAfterScheduled = false;
+let timedInteractionPlaying = false;
+let timedInteractionEffect = "";
 let musicPlaybackState = "idle";
 let musicCycleTimer = 0;
 let musicLoadListener = null;
@@ -112,13 +126,15 @@ const closeTip = document.querySelector("#close-tip");
 
 function setPetState(nextState, options = {}) {
   if (startupPlaying && nextState !== "startup") return;
-  if (scheduledPlaying && nextState !== currentState) return;
+  if (isScheduledAnimationLocked() && nextState !== currentState) return;
   if (!animations[nextState]) {
     nextState = "default";
   }
 
   if (nextState === "default") {
-    if (isMealtime()) nextState = "mealtime";
+    if (hasInterruptibleScheduledAnimation()) nextState = scheduledEffect;
+    else if (hasTimedInteraction()) nextState = timedInteractionEffect;
+    else if (isMealtime()) nextState = "mealtime";
     else if (musicPlaybackState === "playing") nextState = "music";
   }
 
@@ -148,6 +164,18 @@ function setPetState(nextState, options = {}) {
     : nextState === "music" ? `${nextSrc}?play=${++musicPlaybackId}`
     : isKeyboardEffect(nextState) ? `${nextSrc}?play=${++keyboardPlaybackId}`
     : (nextState === "love520" || nextState === "love521") ? `${nextSrc}?play=${++scheduledPlaybackId}` : nextSrc;
+}
+
+function isScheduledAnimationLocked() {
+  return scheduledPlaying && !scheduledInterruptible;
+}
+
+function hasInterruptibleScheduledAnimation() {
+  return scheduledPlaying && scheduledInterruptible;
+}
+
+function hasTimedInteraction() {
+  return timedInteractionPlaying;
 }
 
 function clearMusicCycle() {
@@ -195,10 +223,40 @@ function handleMusicState(state) {
 }
 
 function updateMusicAnimation() {
-  if (startupPlaying || scheduledPlaying || isPressing || isDragging || isScaling) return;
-  if (musicPlaybackState === "playing" && ["default", "hover"].includes(currentState)) {
-    setPetState("default", { force: true });
+  if (startupPlaying || isScheduledAnimationLocked() || isPressing || isDragging || isScaling) return;
+  if (musicPlaybackState === "playing" && ["default", "hover", "sleep", "sleep2", "morningReading", "morningDrink"].includes(currentState)) {
+    // Calling the default resolver here would immediately restore an
+    // interruptible scheduled asset instead of allowing music to play.
+    setPetState(hasInterruptibleScheduledAnimation() || hasTimedInteraction() ? "music" : "default", { force: true });
   }
+}
+
+function updateTimedInteractions(date = new Date()) {
+  const minute = date.getHours() * 60 + date.getMinutes();
+  const animation = TIMED_INTERACTION_WINDOWS.find(item => minute >= item.start && minute < item.end);
+  if (!animation) {
+    if (timedInteractionPlaying) stopTimedInteraction();
+    return;
+  }
+  if (timedInteractionPlaying && timedInteractionEffect === animation.effect) return;
+  if (startupPlaying || isScheduledAnimationLocked() || isDragging || isPressing || isScaling || currentState === "taskComplete") return;
+  if (timedInteractionPlaying) stopTimedInteraction(false);
+  playTimedInteraction(animation);
+}
+
+function stopTimedInteraction(restore = true) {
+  const wasDisplayingTimedInteraction = currentState === timedInteractionEffect;
+  timedInteractionPlaying = false;
+  timedInteractionEffect = "";
+  if (!restore || !wasDisplayingTimedInteraction) return;
+  suppressHoverUntilLeave = isHovering;
+  setPetState("default", { force: true });
+}
+
+function playTimedInteraction({ effect }) {
+  setPetState(effect, { force: true });
+  timedInteractionPlaying = true;
+  timedInteractionEffect = effect;
 }
 
 function updateScheduledAnimations(date = new Date()) {
@@ -212,17 +270,25 @@ function updateScheduledAnimations(date = new Date()) {
     return;
   }
   const slot = `${day} ${nightAnimation ? nightAnimation.effect : time}`;
-  if (failedScheduledSlot === slot || (scheduledPlaying && currentState === animation.effect)) return;
+  if (failedScheduledSlot === slot) return;
+  if (scheduledPlaying && scheduledEffect === animation.effect) {
+    // Interruptible scheduled assets resume through setPetState("default") after
+    // the interaction ends, rather than being restarted by this periodic check.
+    return;
+  }
   if (startupPlaying || isDragging || isPressing || isScaling || currentState === "taskComplete") return;
   if (scheduledPlaying) stopScheduledAnimation(false);
   playScheduledAnimation(animation, slot);
 }
 
 function stopScheduledAnimation(restore = true) {
+  const wasDisplayingScheduledEffect = currentState === scheduledEffect;
   if (scheduledErrorListener) pet.removeEventListener("error", scheduledErrorListener);
   scheduledErrorListener = null;
   scheduledPlaying = false;
-  if (!restore) return;
+  scheduledEffect = "";
+  scheduledInterruptible = false;
+  if (!restore || !wasDisplayingScheduledEffect) return;
   suppressHoverUntilLeave = isHovering;
   setPetState("default", { force: true });
   if (taskCompleteAfterScheduled) {
@@ -231,21 +297,26 @@ function stopScheduledAnimation(restore = true) {
   }
 }
 
-function playScheduledAnimation({ effect }, slot) {
+function playScheduledAnimation({ effect, interruptible = false }, slot) {
   clearClickEffect();
   hideCloseTip();
   scheduledErrorListener = () => {
+    // An interaction may temporarily replace an interruptible scheduled asset.
+    // Its own loading failure must not mark the scheduled slot as failed.
+    if (currentState !== effect) return;
     failedScheduledSlot = slot;
     stopScheduledAnimation();
   };
-  pet.addEventListener("error", scheduledErrorListener, { once: true });
+  pet.addEventListener("error", scheduledErrorListener);
   // Keep the asset displayed until its wall-clock window ends; GIFs loop natively.
   setPetState(effect, { force: true });
   scheduledPlaying = true;
+  scheduledEffect = effect;
+  scheduledInterruptible = interruptible;
 }
 
 function isKeyboardEffect(state) {
-  return state === "send" || state === "good" || state === "delete";
+  return Object.prototype.hasOwnProperty.call(KEYBOARD_GIF_DURATION_MS, state);
 }
 
 function clearKeyboardEffect() {
@@ -263,7 +334,7 @@ function handleKeyboardEffect(action) {
   keyboardPressed[effect] = Boolean(pressed);
   // Key release and auto-repeat never reset the animation or cut a cycle short.
   if (!pressed || currentState === effect) return;
-  if (startupPlaying || scheduledPlaying || isDragging || isPressing || isScaling || currentState === "taskComplete") return;
+  if (startupPlaying || isScheduledAnimationLocked() || isDragging || isPressing || isScaling || currentState === "taskComplete") return;
   clearClickEffect();
   clearKeyboardEffect();
   hideCloseTip();
@@ -277,7 +348,7 @@ function handleKeyboardEffect(action) {
   function finishCycle() {
     if (currentState !== effect) return;
     completedCycles++;
-    if (effect === "good" ? completedCycles < GOOD_PLAY_COUNT : keyboardPressed[effect]) {
+    if (effect === "good" ? completedCycles < GOOD_PLAY_COUNT : effect !== "undo" && keyboardPressed[effect]) {
       keyboardTimer = window.setTimeout(finishCycle, KEYBOARD_GIF_DURATION_MS[effect]);
     } else {
       finish();
@@ -345,7 +416,7 @@ function clearScrollEffect() {
 }
 
 function playScrollEffect() {
-  if (startupPlaying || scheduledPlaying) return;
+  if (startupPlaying || isScheduledAnimationLocked()) return;
   if (isDragging || isPressing || isScaling || currentState === "taskComplete") return;
   lastScrollTime = performance.now();
   // More wheel events extend playback without restarting the GIF mid-cycle.
@@ -411,7 +482,7 @@ function getPetBoundsInWindow() {
 }
 
 function playTaskComplete() {
-  if (scheduledPlaying) {
+  if (isScheduledAnimationLocked()) {
     taskCompleteAfterScheduled = true;
     return;
   }
@@ -430,7 +501,7 @@ function playTaskComplete() {
 }
 
 function playHeartEffect() {
-  if (startupPlaying || scheduledPlaying) return;
+  if (startupPlaying || isScheduledAnimationLocked()) return;
   clearClickEffect();
   hideCloseTip();
   setPetState("click", { force: true });
@@ -444,7 +515,7 @@ function playHeartEffect() {
 }
 
 function playJumpEffect() {
-  if (startupPlaying || scheduledPlaying) return;
+  if (startupPlaying || isScheduledAnimationLocked()) return;
   clearClickEffect();
   setPetState("hover", { force: true });
 }
@@ -496,6 +567,11 @@ function restoreAfterTransientState() {
   }
 
   if (isDragging) {
+    return;
+  }
+
+  if (hasInterruptibleScheduledAnimation() || hasTimedInteraction()) {
+    setPetState("default", { force: true });
     return;
   }
 
@@ -668,7 +744,7 @@ closeTip.addEventListener("click", (event) => {
   window.linePuppyWindow?.close();
 });
 
-["mousedown", "mouseup", "click", "dblclick", "pointerdown", "pointerup", "contextmenu"].forEach((eventName) => {
+["mousedown", "mouseup", "dblclick", "pointerdown", "pointerup", "contextmenu"].forEach((eventName) => {
   closeTip.addEventListener(eventName, (event) => {
     event.stopPropagation();
   });
@@ -733,9 +809,11 @@ window.linePuppyWindow?.onMusicState?.(handleMusicState);
 // Recheck wall-clock time so startup, sleep/resume, and clock changes are handled.
 playStartupAnimation();
 updateMealtime();
+updateTimedInteractions();
 updateScheduledAnimations();
 window.setInterval(() => {
   updateMealtime();
+  updateTimedInteractions();
   updateScheduledAnimations();
   updateMusicAnimation();
 }, 1000);
