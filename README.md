@@ -27,10 +27,10 @@
 
 ### 键盘部分
 
-| Enter | Ctrl + S | Delete / Backspace |
-| :---: | :---: | :---: |
-| <img src="源码/assets/send.gif" width="180" alt="Enter 发送动画" /> | <img src="源码/assets/good.gif" width="180" alt="Ctrl+S 保存动画" /> | <img src="源码/assets/delete.gif" width="180" alt="删除动画" /> |
-| 按下 Enter 或小键盘 Enter 时播放发送动画。 | 按下 Ctrl+S 时播放两次保存成功动画。 | 按下 Delete、小键盘 Delete 或 Backspace 时播放删除动画。 |
+| Enter | Ctrl + S | Ctrl + Z | Delete / Backspace |
+| :---: | :---: | :---: | :---: |
+| <img src="源码/assets/send.gif" width="180" alt="Enter 发送动画" /> | <img src="源码/assets/good.gif" width="180" alt="Ctrl+S 保存动画" /> | <img src="源码/assets/undo.gif" width="180" alt="Ctrl+Z 撤销动画" /> | <img src="源码/assets/delete.gif" width="180" alt="删除动画" /> |
+| 按下 Enter 或小键盘 Enter 时播放发送动画。 | 按下 Ctrl+S 时播放两次保存成功动画。 | 按下 Ctrl+Z 时播放一次撤销动画。 | 按下 Delete、小键盘 Delete 或 Backspace 时播放删除动画。 |
 
 Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 支持 Command+S 保存动画。
 
@@ -42,6 +42,11 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 | 每天 09:30–10:10、12:00–13:00、20:00–21:00。 | 每天 05:20 和 17:20 播放 520 动画。 | 每天 05:21 和 17:21 播放 521 动画。 | 深夜进入困倦状态。 | 凌晨小狗趴下熟睡。 |
 
 定时互动按电脑的本地时间自动触发。
+
+| 10:30–10:40 | 10:40–10:50 |
+| :---: | :---: |
+| <img src="源码/assets/morning-reading.gif" width="150" alt="上午阅读动画" /> | <img src="源码/assets/morning-drink.gif" width="150" alt="上午喝水动画" /> |
+| 循环播放阅读动画；可被其他交互暂时打断，交互结束后恢复，时段结束后回到默认状态。 | 循环播放喝水动画；可被其他交互暂时打断，交互结束后恢复，时段结束后回到默认状态。 |
 
 ### 软件部分
 
@@ -56,11 +61,11 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 
 - 透明悬浮：无边框、透明背景、始终置顶，不占用任务栏位置
 - 鼠标互动：悬停、点击、拖拽和滚轮触发不同动画
-- 键盘互动：Windows 全局响应 Enter、Ctrl+S、Delete 和 Backspace；macOS 响应 Command+S
-- 定时互动：按本地时间自动切换用餐、520、521、困倦和熟睡状态
+- 键盘互动：Windows 全局响应 Enter、Ctrl+S、Ctrl+Z、Delete 和 Backspace；macOS 响应 Command+S
+- 定时互动：按本地时间自动切换用餐、上午互动、520、521、困倦和熟睡状态
 - 音乐互动：Windows 播放受支持的音乐软件时自动切换动画
 - 自由调整：拖动小狗移动位置，拖动右下角旋钮调整大小
-- 系统托盘：可切换开机自启动并退出程序
+- 系统托盘：可切换开机自启动、清除缓存并退出程序
 - 任务反馈：支持通过启动参数播放任务完成动画
 - 单实例运行：重复启动时唤醒已有窗口
 - Windows 安装：一个安装包同时包含 32 位和 64 位版本，可选择安装位置、桌面快捷方式和开机自启动
