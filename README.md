@@ -12,6 +12,7 @@
 
 
 [Windows 10 / 11 下载最新版 line puppy](https://github.com/remake1026/desktop-pets/releases/latest)
+[macOS Apple Silicon（M1 / M2 / M3 / M4）下载 line puppy](https://github.com/remake1026/desktop-pets/releases/tag/v1.2.2-mac)
 
 
 ## 互动展示
