@@ -29,15 +29,10 @@
 
 ### 键盘部分
 
-| Enter | Ctrl + S |
-| :---: | :---: |
-| <img src="源码/assets/send.gif" width="180" alt="Enter 发送动画" /> | <img src="源码/assets/good.gif" width="180" alt="Ctrl+S 保存动画" /> |
-| 按下 Enter 或小键盘 Enter 时播放发送动画 | 按下 Ctrl+S 时播放两次保存成功动画 |
-
-| Ctrl + Z | Delete / Backspace |
-| :---: | :---: |
-| <img src="源码/assets/undo.gif" width="180" alt="Ctrl+Z 撤销动画" /> | <img src="源码/assets/delete.gif" width="180" alt="删除动画" /> |
-| 按下 Ctrl+Z 时播放一次撤销动画 | 按下 Delete、小键盘 Delete 或 Backspace 时播放删除动画 |
+| Enter | Ctrl + S | Ctrl + Z | Delete / Backspace |
+| :---: | :---: | :---: | :---: |
+| <img src="源码/assets/send.gif" width="180" alt="Enter 发送动画" /> | <img src="源码/assets/good.gif" width="180" alt="Ctrl+S 保存动画" /> | <img src="源码/assets/undo.gif" width="180" alt="Ctrl+Z 撤销动画" /> | <img src="源码/assets/delete.gif" width="180" alt="删除动画" /> |
+| 按下 Enter 或小键盘 Enter 时播放发送动画 | 按下 Ctrl+S 时播放两次保存成功动画 | 按下 Ctrl+Z 时播放一次撤销动画 | 按下 Delete、小键盘 Delete 或 Backspace 时播放删除动画 |
 
 Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 支持 Command+S、Command+Z、Return、小键盘 Enter、Delete 和 Fn+Delete 的对应动画。macOS 首次使用全局输入监听时，可能需要在系统“隐私与安全性”中授予输入监控权限；原生监听程序不可用时仍保留 Command+S 的备用触发。
 
