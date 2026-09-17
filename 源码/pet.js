@@ -15,6 +15,7 @@ const animations = {
   love521: "assets/521.gif",
   morningReading: "assets/morning-reading.gif",
   morningDrink: "assets/morning-drink.gif",
+  afterWork: "assets/after-work.gif",
   music: "assets/music.gif",
   sleep: "assets/sleepy.gif",
   sleep2: "assets/sleepy2.gif",
@@ -38,6 +39,7 @@ const priority = {
   love521: 6,
   morningReading: 1,
   morningDrink: 1,
+  afterWork: 1,
   sleep: 1,
   sleep2: 1,
 };
@@ -52,7 +54,11 @@ const SCROLL_GIF_DURATION_MS = 1440;
 const SCROLL_IDLE_MS = 160;
 const KEYBOARD_GIF_DURATION_MS = { send: 1740, good: 1000, delete: 1840, undo: 2000 };
 const GOOD_PLAY_COUNT = 2;
-const MUSIC_GIF_DURATION_MS = 1600;
+const MUSIC_ANIMATIONS = [
+  // Both groups last 9.6 seconds: 1.6s × 6 and 1.92s × 5.
+  { src: "assets/music.gif", durationMs: 1600, playCount: 6 },
+  { src: "assets/music-dance.gif", durationMs: 1920, playCount: 5 },
+];
 const SCHEDULED_ANIMATIONS = [
   { time: "05:20", effect: "love520" }, // 05:20:00–05:20:59
   { time: "17:20", effect: "love520" }, // 17:20:00–17:20:59
@@ -62,6 +68,7 @@ const SCHEDULED_ANIMATIONS = [
 const TIMED_INTERACTION_WINDOWS = [
   { start: 10 * 60 + 30, end: 10 * 60 + 40, effect: "morningReading" },
   { start: 10 * 60 + 40, end: 10 * 60 + 50, effect: "morningDrink" },
+  { start: 18 * 60, end: 19 * 60, effect: "afterWork" },
 ];
 const MEALTIME_WINDOWS = [[9 * 60 + 30, 10 * 60 + 10], [12 * 60, 13 * 60], [20 * 60, 21 * 60]];
 const NIGHTTIME_WINDOWS = [
@@ -116,6 +123,8 @@ let musicCycleTimer = 0;
 let musicLoadListener = null;
 let musicErrorListener = null;
 let musicPlaybackId = 0;
+let musicAnimationIndex = 0;
+let musicCyclesPlayed = 0;
 
 const pet = document.querySelector("#pet");
 const petShell = document.querySelector("#pet-shell");
@@ -143,7 +152,7 @@ function setPetState(nextState, options = {}) {
   }
 
   const img = document.querySelector("#pet");
-  const nextSrc = animations[nextState];
+  const nextSrc = nextState === "music" ? currentMusicAnimation().src : animations[nextState];
 
   if (!img) return;
 
@@ -159,11 +168,11 @@ function setPetState(nextState, options = {}) {
 
   currentState = nextState;
   img.dataset.current = nextSrc;
-  if (nextState === "music") startMusicCycle();
   img.src = nextState === "scroll" ? `${nextSrc}?play=${++scrollPlaybackId}`
     : nextState === "music" ? `${nextSrc}?play=${++musicPlaybackId}`
     : isKeyboardEffect(nextState) ? `${nextSrc}?play=${++keyboardPlaybackId}`
     : (nextState === "love520" || nextState === "love521") ? `${nextSrc}?play=${++scheduledPlaybackId}` : nextSrc;
+  if (nextState === "music") startMusicCycle();
 }
 
 function isScheduledAnimationLocked() {
@@ -187,20 +196,37 @@ function clearMusicCycle() {
   musicErrorListener = null;
 }
 
+function currentMusicAnimation() {
+  return MUSIC_ANIMATIONS[musicAnimationIndex];
+}
+
+function resetMusicPlaylist() {
+  musicAnimationIndex = 0;
+  musicCyclesPlayed = 0;
+}
+
 function startMusicCycle() {
   clearMusicCycle();
   function finishCycle() {
     if (currentState !== "music") return;
     if (musicPlaybackState === "playing") {
-      musicCycleTimer = window.setTimeout(finishCycle, MUSIC_GIF_DURATION_MS);
+      musicCyclesPlayed++;
+      if (musicCyclesPlayed >= currentMusicAnimation().playCount) {
+        musicAnimationIndex = (musicAnimationIndex + 1) % MUSIC_ANIMATIONS.length;
+        musicCyclesPlayed = 0;
+        setPetState("music", { force: true });
+        return;
+      }
+      musicCycleTimer = window.setTimeout(finishCycle, currentMusicAnimation().durationMs);
     } else {
       suppressHoverUntilLeave = isHovering;
+      resetMusicPlaylist();
       setPetState("default", { force: true });
     }
   }
   musicLoadListener = () => {
     musicLoadListener = null;
-    musicCycleTimer = window.setTimeout(finishCycle, MUSIC_GIF_DURATION_MS);
+    musicCycleTimer = window.setTimeout(finishCycle, currentMusicAnimation().durationMs);
   };
   musicErrorListener = () => {
     musicPlaybackState = "unknown";
@@ -217,6 +243,7 @@ function handleMusicState(state) {
   // Pause, stop, or unsupported output immediately restores the default pet.
   if ((state === "paused" || state === "blocked" || state === "unknown") && currentState === "music") {
     suppressHoverUntilLeave = isHovering;
+    resetMusicPlaylist();
     setPetState("default", { force: true });
   }
   updateMusicAnimation();
@@ -224,10 +251,11 @@ function handleMusicState(state) {
 
 function updateMusicAnimation() {
   if (startupPlaying || isScheduledAnimationLocked() || isPressing || isDragging || isScaling) return;
-  if (musicPlaybackState === "playing" && ["default", "hover", "sleep", "sleep2", "morningReading", "morningDrink"].includes(currentState)) {
+  if (musicPlaybackState === "playing" && ["default", "mealtime", "sleep", "sleep2", "morningReading", "morningDrink", "afterWork"].includes(currentState)) {
     // Calling the default resolver here would immediately restore an
     // interruptible scheduled asset instead of allowing music to play.
-    setPetState(hasInterruptibleScheduledAnimation() || hasTimedInteraction() ? "music" : "default", { force: true });
+    resetMusicPlaylist();
+    setPetState("music", { force: true });
   }
 }
 
@@ -396,7 +424,7 @@ function isMealtime(date = new Date()) {
 
 function updateMealtime() {
   if (isMealtime()) {
-    if (currentState === "default" || currentState === "hover" || currentState === "music") {
+    if (currentState === "default") {
       hideCloseTip();
       setPetState("mealtime", { force: true });
     }
@@ -590,7 +618,7 @@ function enterHover() {
 
   isHovering = true;
 
-  if (!isDragging && !isMealtime() && !isKeyboardEffect(currentState) && currentState !== "music" && currentState !== "click" && currentState !== "taskComplete" && currentState !== "scroll") {
+  if (!isDragging && !isKeyboardEffect(currentState) && currentState !== "click" && currentState !== "taskComplete" && currentState !== "scroll") {
     playJumpEffect();
   }
 }
@@ -623,7 +651,7 @@ function leaveHover(event) {
   hideCloseTip();
 
   if (!isDragging && currentState !== "taskComplete" && currentState === "hover") {
-    setPetState("default", { force: true });
+    setPetState(musicPlaybackState === "playing" ? "music" : "default", { force: true });
   }
 }
 

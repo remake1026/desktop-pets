@@ -63,6 +63,17 @@ if (!process.versions.electron) {
       });
       assert.equal(ready, true);
       assert.equal(await mediaReady, true);
+      // The helper has proved it can launch. Stop it for the rest of this
+      // renderer test so media playing on the developer's PC cannot change a
+      // deliberately controlled animation assertion.
+      await new Promise(resolve => {
+        mediaListener.once("exit", resolve);
+        mediaListener.kill();
+      });
+      await new Promise(resolve => {
+        listener.once("exit", resolve);
+        listener.kill();
+      });
       assert.equal(api.getTray().isDestroyed(), false);
       const menu = api.buildUtilityMenu(true);
       const startup = menu.find(item => item.type === "checkbox");
@@ -91,8 +102,12 @@ if (!process.versions.electron) {
       await evaluate("hitArea.click()");
       await wait(500);
       assert.equal(await evaluate("currentState"), "startup");
-      await wait(2600);
-      assert.equal(await evaluate("currentState"), "default");
+      // GIF playback begins only after the browser has decoded the image.
+    await wait(3000);
+    // Native wheel events can arrive just as the startup animation ends.  Let
+    // that short, unrelated effect finish before asserting the resting state.
+    if (await evaluate("currentState") === "scroll") await wait(1800);
+    assert.equal(await evaluate("currentState"), "default");
       console.log("PASS: startup GIF plays once, completes, and ignores early click/scroll");
       await evaluate(`window.RealDate = Date; window.Date = class extends RealDate { getHours() { return 12; } getMinutes() { return 15; } }; updateMealtime();`);
       assert.equal(await evaluate("currentState"), "mealtime");
@@ -122,7 +137,9 @@ if (!process.versions.electron) {
         window.webContents.send("pet:keyboard-effect", { effect, pressed: false });
         await wait(150);
         assert.equal(await evaluate("currentState"), effect);
-        await wait(duration);
+        // The animation duration starts after the browser finishes decoding the
+        // GIF, so leave a small allowance for asynchronous image loading.
+        await wait(duration + 400);
         assert.equal(await evaluate("currentState"), "default");
       }
       console.log("PASS: send/good/delete IPC and real GIF completion after key release");

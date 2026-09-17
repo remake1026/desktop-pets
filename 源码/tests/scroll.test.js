@@ -151,9 +151,12 @@ test("all three meal windows include their start and exclude their end", () => {
   }
 });
 
-test("meal animation resumes after local click/scroll; deadline returns to default", () => {
+test("meal animation yields to hover, music, click, and scroll before resuming", () => {
   const f = fixture(); f.time(12, 0);
-  f.hit.emit("mouseenter"); assert.equal(f.state(), "mealtime");
+  f.hit.emit("mouseenter"); assert.equal(f.state(), "hover");
+  f.hit.emit("mouseleave", { clientX: 300, clientY: 300 }); assert.equal(f.state(), "mealtime");
+  f.music("playing"); assert.equal(f.state(), "music");
+  f.music("paused"); assert.equal(f.state(), "mealtime");
   f.hit.emit("click"); assert.equal(f.state(), "click");
   f.advance(1440); assert.equal(f.state(), "mealtime");
   f.wheel(); f.load(); f.advance(1440); assert.equal(f.state(), "mealtime");
@@ -278,6 +281,23 @@ test("morning timed interactions loop through their windows, yield to input, and
   f.time(10, 50); assert.equal(f.state(), "default");
 });
 
+test("after-work animation loops through its window and resumes after interactions", () => {
+  const f = fixture();
+  f.time(18, 0); assert.equal(f.state(), "afterWork");
+  f.load(); f.advance(800 * 3); assert.equal(f.state(), "afterWork");
+  f.hit.emit("mouseenter"); assert.equal(f.state(), "hover");
+  f.hit.emit("mouseleave"); assert.equal(f.state(), "afterWork");
+
+  const music = fixture();
+  music.time(18, 0); music.music("playing"); assert.equal(music.state(), "music");
+  music.music("paused"); assert.equal(music.state(), "afterWork");
+
+  const scroll = fixture();
+  scroll.time(18, 0); scroll.wheel(); assert.equal(scroll.state(), "scroll");
+  scroll.load(); scroll.advance(1440); assert.equal(scroll.state(), "afterWork");
+  scroll.time(19, 0); assert.equal(scroll.state(), "default");
+});
+
 test("scheduled clips wait for startup and resist input until their time window ends", () => {
   const f = fixture({ includeStartup: true });
   f.time(5, 20); assert.equal(f.state(), "startup");
@@ -290,17 +310,20 @@ test("scheduled clips wait for startup and resist input until their time window 
   f.time(5, 21); assert.equal(f.state(), "default");
 });
 
-test("music pause immediately restores the default state", () => {
+test("music alternates equal-length asset groups and resets on pause", () => {
   const f = fixture();
   f.music("paused"); assert.equal(f.state(), "default");
   f.music("playing"); assert.equal(f.state(), "music");
   f.load();
-  const src = f.pet.src; f.advance(10000); f.music("playing");
-  assert.equal(f.pet.src, src);
-  f.hit.emit("mouseenter"); assert.equal(f.state(), "music");
+  const originalSrc = f.pet.src;
+  f.advance(9600); assert.match(f.pet.src, /music-dance\.gif/);
+  f.load(); f.advance(9600); assert.match(f.pet.src, /music\.gif/);
+  f.load(); assert.notEqual(f.pet.src, originalSrc);
+  f.hit.emit("mouseenter"); assert.equal(f.state(), "hover");
+  f.hit.emit("mouseleave", { clientX: 300, clientY: 300 }); assert.equal(f.state(), "music");
   f.music("paused"); assert.equal(f.state(), "default");
   f.advance(1200); assert.equal(f.state(), "default");
-  f.music("paused"); assert.equal(f.state(), "default");
+  f.music("playing"); assert.match(f.pet.src, /music\.gif/);
 });
 
 test("video and unknown output exit immediately; music restarts after pause", () => {
@@ -315,11 +338,11 @@ test("video and unknown output exit immediately; music restarts after pause", ()
   f.music("blocked"); assert.equal(f.state(), "default");
 });
 
-test("music restores after input and preserves scheduled meals and startup", () => {
+test("music restores after input, can cover meals, and preserves startup", () => {
   const f = fixture(); f.music("playing");
   f.key("good", true); f.load(); f.key("good", false); f.advance(2000);
   assert.equal(f.state(), "music");
-  f.time(12, 0); assert.equal(f.state(), "mealtime");
+  f.time(12, 0); assert.equal(f.state(), "music");
   f.time(13, 0); assert.equal(f.state(), "music");
   const starting = fixture({ includeStartup: true }); starting.music("playing");
   assert.equal(starting.state(), "startup"); starting.load(); starting.advance(2900);

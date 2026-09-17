@@ -4,7 +4,7 @@
 
 ![秋日桌面预览](docs/images/readme-autumn.png)
 
-一个基于 Electron 的桌面萌宠。小狗会悬浮在桌面上，根据鼠标、键盘、时间和软件状态播放不同动画，也可以拖动、缩放和设置开机自启动。
+一个基于 Electron 的桌面萌宠。小狗会悬浮在桌面上，根据鼠标、键盘、时间和软件状态播放不同动画，也可以拖动、缩放和设置开机自启动。检测到音乐播放时，会将两段音乐动画各循环 9.6 秒后交替播放。
 
 当前版本为 **V.1.2.2**。
 
@@ -34,14 +34,14 @@
 | <img src="源码/assets/send.gif" width="180" alt="Enter 发送动画" /> | <img src="源码/assets/good.gif" width="180" alt="Ctrl+S 保存动画" /> | <img src="源码/assets/undo.gif" width="180" alt="Ctrl+Z 撤销动画" /> | <img src="源码/assets/delete.gif" width="180" alt="删除动画" /> |
 | 按下 Enter 或小键盘 Enter 时播放发送动画。 | 按下 Ctrl+S 时播放两次保存成功动画。 | 按下 Ctrl+Z 时播放一次撤销动画。 | 按下 Delete、小键盘 Delete 或 Backspace 时播放删除动画。 |
 
-Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 支持 Command+S 保存动画。
+Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 支持 Command+S、Command+Z、Return、小键盘 Enter、Delete 和 Fn+Delete 的对应动画。macOS 首次使用全局输入监听时，可能需要在系统“隐私与安全性”中授予输入监控权限；原生监听程序不可用时仍保留 Command+S 的备用触发。
 
 ### 定时部分
 
-| 用餐时间 | 5:20 / 17:20 | 5:21 / 17:21 | 23:00–24:00 | 00:00–02:00 |
-| :---: | :---: | :---: | :---: | :---: |
-| <img src="源码/assets/mealtime.gif" width="150" alt="用餐时间动画" /> | <img src="源码/assets/520.gif" width="150" alt="520 定时动画" /> | <img src="源码/assets/521.gif" width="150" alt="521 定时动画" /> | <img src="源码/assets/sleepy.gif" width="150" alt="深夜睡觉动画" /> | <img src="源码/assets/sleepy2.gif" width="150" alt="凌晨趴睡动画" /> |
-| 每天 09:30–10:10、12:00–13:00、20:00–21:00。 | 每天 05:20 和 17:20 播放 520 动画。 | 每天 05:21 和 17:21 播放 521 动画。 | 深夜进入困倦状态。 | 凌晨小狗趴下熟睡。 |
+| 用餐时间 | 5:20 / 17:20 | 5:21 / 17:21 | 下班时间 | 23:00–24:00 | 00:00–02:00 |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| <img src="源码/assets/mealtime.gif" width="150" alt="用餐时间动画" /> | <img src="源码/assets/520.gif" width="150" alt="520 定时动画" /> | <img src="源码/assets/521.gif" width="150" alt="521 定时动画" /> | <img src="源码/assets/after-work.gif" width="150" alt="下班时间动画" /> | <img src="源码/assets/sleepy.gif" width="150" alt="深夜睡觉动画" /> | <img src="源码/assets/sleepy2.gif" width="150" alt="凌晨趴睡动画" /> |
+| 每天 09:30–10:10、12:00–13:00、20:00–21:00。 | 每天 05:20 和 17:20 播放 520 动画。 | 每天 05:21 和 17:21 播放 521 动画。 | 每天 18:00–19:00 循环播放；可被其他交互暂时打断并恢复。 | 深夜进入困倦状态。 | 凌晨小狗趴下熟睡。 |
 
 定时互动按电脑的本地时间自动触发。
 
@@ -57,14 +57,20 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 | <img src="源码/assets/turn on.gif" width="180" alt="软件启动动画" /> | <img src="源码/assets/music.gif" width="180" alt="音乐播放动画" /> | <img src="源码/assets/usageOver3Hours.gif" width="180" alt="任务完成动画" /> |
 | 每次启动时播放开场动画。 | Windows 检测到受支持的音乐软件正在播放时自动切换。 | 使用 `--task-complete` 参数触发庆祝动画。 |
 
-音乐互动支持 QQ 音乐、网易云音乐、酷狗音乐、iTunes 和 Apple Music；暂停或停止音乐后恢复日常状态。
+音乐互动支持 QQ 音乐、网易云音乐、酷狗音乐、iTunes 和 Apple Music；播放时 `music.gif` 循环 6 次（1.6 秒/次），`music-dance.gif` 循环 5 次（1.92 秒/次），两组各为 9.6 秒后交替循环。暂停或停止音乐后恢复当前时段应显示的状态；鼠标悬浮可临时覆盖音乐动画，移开后若音乐仍在播放会立即恢复音乐动画。
+
+### 播放与打断规则
+
+- 启动动画及 5:20 / 17:20 的 520、5:21 / 17:21 的 521 动画为锁定动画，播放期间不会被其它交互打断。
+- 用餐、上午阅读/喝水、下班、困倦和趴睡属于可恢复时段动画；可被悬浮、音乐、点击、键盘、滚轮、拖拽和任务完成临时覆盖，交互结束后若时段仍有效则恢复。
+- 悬浮可临时覆盖普通时段和音乐动画；鼠标移开后优先恢复仍在播放的音乐，否则恢复当前有效时段或默认状态。
 
 ## 功能
 
 - 透明悬浮：无边框、透明背景、始终置顶，不占用任务栏位置
 - 鼠标互动：悬停、点击、拖拽和滚轮触发不同动画
-- 键盘互动：Windows 全局响应 Enter、Ctrl+S、Ctrl+Z、Delete 和 Backspace；macOS 响应 Command+S
-- 定时互动：按本地时间自动切换用餐、上午互动、520、521、困倦和熟睡状态
+- 键盘互动：Windows 全局响应 Enter、Ctrl+S、Ctrl+Z、Delete 和 Backspace；macOS 对应 Command+S、Command+Z、Return、Delete / Fn+Delete
+- 定时互动：按本地时间自动切换用餐、上午互动、下班时间、520、521、困倦和熟睡状态；520 / 521 为不可打断的锁定动画，其余时段素材可被悬停、音乐及其它互动临时覆盖，互动结束后恢复该时段素材
 - 音乐互动：Windows 播放受支持的音乐软件时自动切换动画
 - 自由调整：拖动小狗移动位置，拖动右下角旋钮调整大小
 - 系统托盘：可切换开机自启动、清除缓存并退出程序
