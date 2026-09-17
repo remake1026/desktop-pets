@@ -13,7 +13,7 @@
 
 [下载最新版 Windows 10 / 11 安装包（V2.1.1）](https://github.com/remake1026/desktop-pets/releases/download/V.2.1.1/line.puppy-2.1.1-win10-11-set.up.exe)
 
-[macOS Apple Silicon（M1 / M2 / M3 / M4）下载 line puppy](https://github.com/remake1026/desktop-pets/releases/tag/v1.2.2-mac)
+[下载最新版 macOS Apple Silicon（M1 / M2 / M3 / M4）安装包（V2.1.2）](https://github.com/remake1026/desktop-pets/releases/download/V.2.1.2/line.puppy-2.1.1-mac-arm64.1.dmg)
 
 注意！！mac版本Command+S 会覆盖软件原本的保存功能！需要关闭桌宠程序才可恢复！！（修复中)
 
@@ -96,7 +96,16 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 
 ### macOS（Apple Silicon）
 
-macOS 当前版本为 v1.2.2，仅支持 Apple Silicon（M 系列芯片）Mac，系统要求 macOS 12 Monterey 或更新。
+macOS 当前版本为 V2.1.2，仅支持 Apple Silicon（M 系列芯片）Mac，系统要求 macOS 12 Monterey 或更新。
+
+#### V2.1.2 更新
+
+- 支持透明悬浮、拖动与点击互动，以及全局键盘、鼠标滚轮互动。
+- 新增音乐检测动画：QQ 音乐、网易云音乐、Apple Music、酷狗音乐和 Spotify 播放时触发；使用 macOS CoreAudio，无需额外安装 Node.js 等运行环境。
+- 顶部菜单栏支持登录时启动、清除缓存与退出；键盘和滚轮互动首次使用时，需在“隐私与安全性”中允许“辅助功能”和“输入监控”。
+- Intel Mac 暂不支持。
+
+> 兼容性说明：安装包仍在持续进行跨设备验证；已知一台 M1 Pro、macOS Sonoma 14.6.1 设备曾出现“无法打开”，如遇到相同情况请反馈系统版本与提示信息。
 
 注意！！mac版本Command+S 会覆盖软件原本的保存功能！需要关闭桌宠程序才可恢复！！（修复中)
 使用 Homebrew：
@@ -106,7 +115,7 @@ brew tap remake1026/desktop-pets https://github.com/remake1026/desktop-pets.git
 brew install --cask line-dog
 ```
 
-也可以[下载 DMG](https://github.com/remake1026/desktop-pets/releases/download/v1.2.2-mac/line.puppy-1.2.2-Mac-arm64.dmg)，打开后将应用拖入 **Applications**。首次打开若提示无法验证开发者，请按住 Control 点击应用并选择“打开”，或执行：
+也可以[下载 DMG（V2.1.2）](https://github.com/remake1026/desktop-pets/releases/download/V.2.1.2/line.puppy-2.1.1-mac-arm64.1.dmg)，打开后将应用拖入 **Applications**。首次打开若提示无法验证开发者，请按住 Control 点击应用并选择“打开”，或执行：
 
 ```bash
 xattr -cr "/Applications/line puppy.app"
