@@ -54,8 +54,8 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 
 | 启动软件 | 播放音乐 | 任务完成 |
 | :---: | :---: | :---: |
-| <img src="源码/assets/turn on.gif" width="180" alt="软件启动动画" /> | <img src="源码/assets/music.gif" width="180" alt="音乐播放动画" /> | <img src="源码/assets/usageOver3Hours.gif" width="180" alt="任务完成动画" /> |
-| 每次启动时播放开场动画。 | Windows 检测到受支持的音乐软件正在播放时自动切换。 | 使用 `--task-complete` 参数触发庆祝动画。 |
+| <img src="源码/assets/turn on.gif" width="180" alt="软件启动动画" /> | <img src="源码/assets/music.gif" width="130" alt="音乐播放动画一" /> <img src="源码/assets/music-dance.gif" width="130" alt="音乐播放动画二" /> | <img src="源码/assets/usageOver3Hours.gif" width="180" alt="任务完成动画" /> |
+| 每次启动时播放开场动画。 | Windows 检测到受支持的音乐软件正在播放时自动切换，并在两段音乐素材间轮播。 | 使用 `--task-complete` 参数触发庆祝动画。 |
 
 音乐互动支持 QQ 音乐、网易云音乐、酷狗音乐、iTunes 和 Apple Music；播放时 `music.gif` 循环 6 次（1.6 秒/次），`music-dance.gif` 循环 5 次（1.92 秒/次），两组各为 9.6 秒后交替循环。暂停或停止音乐后恢复当前时段应显示的状态；鼠标悬浮可临时覆盖音乐动画，移开后若音乐仍在播放会立即恢复音乐动画。
 
