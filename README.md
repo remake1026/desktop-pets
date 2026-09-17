@@ -11,7 +11,7 @@
 ## 下载
 
 
-[下载最新版 Windows10-11 安装包](https://github.com/remake1026/desktop-pets/releases/download/V.2.1.1/line-puppy-2.1.1-win10-11-set-up.exe)
+[下载最新版 Windows10-11 安装包] [Windows 下载安装包](https://github.com/remake1026/desktop-pets/releases/latest/download/line-puppy-2.1.1-win10-11-set-up.exe)
 
 [macOS Apple Silicon（M1 / M2 / M3 / M4）下载 line puppy](https://github.com/remake1026/desktop-pets/releases/tag/v1.2.2-mac)
 
