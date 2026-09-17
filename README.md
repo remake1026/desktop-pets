@@ -25,14 +25,14 @@
 | 默认 | 鼠标悬停 | 鼠标点击 | 鼠标拖拽 | 滚动滚轮 |
 | :---: | :---: | :---: | :---: | :---: |
 | <img src="源码/assets/sleep.gif" width="150" alt="默认睡觉动画" /> | <img src="源码/assets/jump.gif" width="150" alt="鼠标悬停动画" /> | <img src="源码/assets/heart.gif" width="150" alt="鼠标点击动画" /> | <img src="源码/assets/special.gif" width="150" alt="鼠标拖拽动画" /> | <img src="源码/assets/scroll.gif" width="150" alt="鼠标滚轮动画" /> |
-| 不操作时安静睡陪伴。 | 指针移到小狗身上时跳跃。 | 左键点击时播放爱心动画。 | 按住左键拖动小狗到新位置。 | Windows 中滚动鼠标滚轮时播放滚动动画。 |
+| 不操作时安静睡陪伴 | 指针移到小狗身上时跳跃 | 左键点击时播放爱心动画 | 按住左键拖动小狗到新位置 | Windows 中滚动鼠标滚轮时播放滚动动画 |
 
 ### 键盘部分
 
 | Enter | Ctrl + S | Ctrl + Z | Delete / Backspace |
 | :---: | :---: | :---: | :---: |
 | <img src="源码/assets/send.gif" width="180" alt="Enter 发送动画" /> | <img src="源码/assets/good.gif" width="180" alt="Ctrl+S 保存动画" /> | <img src="源码/assets/undo.gif" width="180" alt="Ctrl+Z 撤销动画" /> | <img src="源码/assets/delete.gif" width="180" alt="删除动画" /> |
-| 按下 Enter 或小键盘 Enter 时播放发送动画。 | 按下 Ctrl+S 时播放两次保存成功动画。 | 按下 Ctrl+Z 时播放一次撤销动画。 | 按下 Delete、小键盘 Delete 或 Backspace 时播放删除动画。 |
+| 按下 Enter 或小键盘 Enter 时播放发送动画 | 按下 Ctrl+S 时播放两次保存成功动画 | 按下 Ctrl+Z 时播放一次撤销动画 | 按下 Delete、小键盘 Delete 或 Backspace 时播放删除动画 |
 
 Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 支持 Command+S、Command+Z、Return、小键盘 Enter、Delete 和 Fn+Delete 的对应动画。macOS 首次使用全局输入监听时，可能需要在系统“隐私与安全性”中授予输入监控权限；原生监听程序不可用时仍保留 Command+S 的备用触发。
 
@@ -41,14 +41,14 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 | 用餐时间 | 充电时间 | 充电时间 | 下班时间 | 熬夜时间 | 睡觉时间 |
 | :---: | :---: | :---: | :---: | :---: | :---: |
 | <img src="源码/assets/mealtime.gif" width="150" alt="用餐时间动画" /> | <img src="源码/assets/520.gif" width="150" alt="520 定时动画" /> | <img src="源码/assets/521.gif" width="150" alt="521 定时动画" /> | <img src="源码/assets/after-work.gif" width="150" alt="下班时间动画" /> | <img src="源码/assets/sleepy.gif" width="150" alt="深夜睡觉动画" /> | <img src="源码/assets/sleepy2.gif" width="150" alt="凌晨趴睡动画" /> |
-| 每天 09:30–10:10、12:00–13:00、20:00–21:00。 | 每天 05:20 和 17:20 播放 520 动画。 | 每天 05:21 和 17:21 播放 521 动画。 | 每天 18:00–19:00 循环播放；可被其他交互暂时打断并恢复。 | 每天 23:00–24:00 深夜进入困倦状态。 | 每天 00:00–02:00 凌晨小狗趴下熟睡。 |
+| 每天 09:30–10:10、12:00–13:00、20:00–21:00 | 每天 05:20 和 17:20 播放 520 动画 | 每天 05:21 和 17:21 播放 521 动画 | 每天 18:00–19:00 提示该下班了 | 每天 23:00–24:00 深夜进入困倦状态 | 每天 00:00–02:00 凌晨小狗趴下熟睡 |
 
 定时互动按电脑的本地时间自动触发。
 
 | 小白拉屎 | 小鸡毛拉屎 |
 | :---: | :---: |
 | <img src="源码/assets/morning-reading.gif" width="150" alt="上午阅读动画" /> | <img src="源码/assets/morning-drink.gif" width="150" alt="上午喝水动画" /> |
-| 每天 10:30–10:40 固定拉屎； | 每天 10:40–10:50 固定拉屎 |
+| 每天 10:30–10:40 固定拉屎 | 每天 10:40–10:50 固定拉屎 |
 
 ### 软件部分
 
