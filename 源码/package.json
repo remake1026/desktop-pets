@@ -1,6 +1,6 @@
 {
   "name": "line-puppy-desktop-pet",
-  "version": "2.0.0",
+  "version": "2.1.1",
   "private": true,
   "description": "line puppy desktop pet using native GIF playback.",
   "author": "remake1026",
@@ -81,7 +81,7 @@
       "target": "nsis",
       "icon": "installer-resources/icon.ico",
       "executableName": "line puppy",
-      "artifactName": "V${version}.${ext}",
+      "artifactName": "line puppy-${version}-win10-11-set up.${ext}",
       "requestedExecutionLevel": "asInvoker"
     },
     "nsis": {
