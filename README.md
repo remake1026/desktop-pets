@@ -40,11 +40,11 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 
 | **用餐时间** | **充电时间** | **充电时间** | **下班时间** |
 | :---: | :---: | :---: | :---: |
-| <img src="源码/assets/mealtime.gif" width="120" alt="用餐时间动画" /> | <img src="源码/assets/520.gif" width="120" alt="520 定时动画" /> | <img src="源码/assets/521.gif" width="120" alt="521 定时动画" /> | <img src="源码/assets/after-work.gif" width="120" alt="下班时间动画" /> |
+| <img src="源码/assets/mealtime.gif" width="180" alt="用餐时间动画" /> | <img src="源码/assets/520.gif" width="180" alt="520 定时动画" /> | <img src="源码/assets/521.gif" width="180" alt="521 定时动画" /> | <img src="源码/assets/after-work.gif" width="180" alt="下班时间动画" /> |
 | 每天 09:30–10:10、12:00–13:00、20:00–21:00<br>播放用餐动画 | 每天 05:20 和 17:20<br>播放 520 动画 | 每天 05:21 和 17:21<br>播放 521 动画 | 每天 18:00–19:00<br>提示该下班了 |
 | &nbsp; | &nbsp; | &nbsp; | &nbsp; |
 | **熬夜时间** | **睡觉时间** | **小白拉屎** | **小鸡毛拉屎** |
-| <img src="源码/assets/sleepy.gif" width="120" alt="深夜睡觉动画" /> | <img src="源码/assets/sleepy2.gif" width="120" alt="凌晨趴睡动画" /> | <img src="源码/assets/morning-reading.gif" width="120" alt="上午阅读动画" /> | <img src="源码/assets/morning-drink.gif" width="120" alt="上午喝水动画" /> |
+| <img src="源码/assets/sleepy.gif" width="180" alt="深夜睡觉动画" /> | <img src="源码/assets/sleepy2.gif" width="180" alt="凌晨趴睡动画" /> | <img src="源码/assets/morning-reading.gif" width="180" alt="上午阅读动画" /> | <img src="源码/assets/morning-drink.gif" width="180" alt="上午喝水动画" /> |
 | 每天 23:00–24:00<br>深夜进入困倦状态 | 每天 00:00–02:00<br>凌晨小狗趴下熟睡 | 每天 10:30–10:40<br>固定拉屎 | 每天 10:40–10:50<br>固定拉屎 |
 
 定时互动按电脑的本地时间自动触发。
