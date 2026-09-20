@@ -41,6 +41,12 @@ contextBridge.exposeInMainWorld("linePuppyWindow", {
     ipcRenderer.on("pet:music-state", listener);
     return () => ipcRenderer.removeListener("pet:music-state", listener);
   },
+  onDesktopLockChange(callback) {
+    if (typeof callback !== "function") return () => {};
+    const listener = (_event, locked) => callback(locked);
+    ipcRenderer.on("pet:desktop-lock", listener);
+    return () => ipcRenderer.removeListener("pet:desktop-lock", listener);
+  },
   onKeyboardEffect(callback) {
     if (typeof callback !== "function") return () => {};
     const listener = (_event, action) => callback(action);

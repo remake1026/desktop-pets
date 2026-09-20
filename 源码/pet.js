@@ -125,6 +125,7 @@ let musicErrorListener = null;
 let musicPlaybackId = 0;
 let musicAnimationIndex = 0;
 let musicCyclesPlayed = 0;
+let desktopLocked = false;
 
 const pet = document.querySelector("#pet");
 const petShell = document.querySelector("#pet-shell");
@@ -486,6 +487,11 @@ function setIgnoreMouseEvents(ignore) {
 }
 
 function updatePointerPassthrough(event) {
+  if (desktopLocked) {
+    setIgnoreMouseEvents(true);
+    return;
+  }
+
   if (isDragging || isPressing || isScaling) {
     setIgnoreMouseEvents(false);
     return;
@@ -607,6 +613,10 @@ function restoreAfterTransientState() {
 }
 
 function enterHover() {
+  if (desktopLocked) {
+    return;
+  }
+
   if (suppressHoverUntilLeave) {
     isHovering = true;
     return;
@@ -656,6 +666,10 @@ function leaveHover(event) {
 }
 
 function updateHoverFromPointer(event) {
+  if (desktopLocked) {
+    return;
+  }
+
   if (isPointerInsideHitArea(event)) {
     enterHover();
     return;
@@ -833,6 +847,25 @@ window.linePuppyWindow?.onTaskComplete(() => {
 window.linePuppyWindow?.onScroll?.(playScrollEffect);
 window.linePuppyWindow?.onKeyboardEffect?.(handleKeyboardEffect);
 window.linePuppyWindow?.onMusicState?.(handleMusicState);
+window.linePuppyWindow?.onDesktopLockChange?.((locked) => {
+  desktopLocked = Boolean(locked);
+  document.body.classList.toggle("desktop-locked", desktopLocked);
+
+  if (!desktopLocked) return;
+
+  // Entering locked mode drops any in-flight pointer interaction so the pet
+  // immediately becomes a passive overlay that no longer reacts to the mouse.
+  isHovering = false;
+  isPressing = false;
+  isDragging = false;
+  isScaling = false;
+  suppressNextClick = false;
+  hideCloseTip();
+  clearClickEffect();
+  if (["hover", "click", "drag"].includes(currentState)) {
+    setPetState("default", { force: true });
+  }
+});
 
 // Recheck wall-clock time so startup, sleep/resume, and clock changes are handled.
 playStartupAnimation();
