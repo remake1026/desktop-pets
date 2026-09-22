@@ -121,3 +121,10 @@ body {
 .scale-button:active {
   background: rgba(12, 11, 16, 0.98) url("assets/scale-handle.png") center / cover no-repeat;
 }
+
+/* Locked desktop mode: the pet is a click-through overlay, so no on-hover
+   affordances (scale handle, close tooltip) should ever appear. */
+body.desktop-locked #controls,
+body.desktop-locked #close-tip {
+  display: none;
+}

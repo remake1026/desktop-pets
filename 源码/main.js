@@ -21,6 +21,7 @@ let scrollListener = null;
 let macInputListener = null;
 let musicListener = null;
 let musicState = "idle";
+let desktopLocked = false;
 
 const hasTaskCompleteFlag = process.argv.includes("--task-complete");
 const lock = app.requestSingleInstanceLock();
@@ -44,6 +45,8 @@ if (!lock) {
   });
 
   app.whenReady().then(() => {
+    desktopLocked = loadSettings().desktopLocked === true;
+
     if (isWindows) repairWindowsLoginItem();
 
     if (isMac) {
@@ -224,10 +227,16 @@ function createPetWindow() {
     ignoringMouseEvents = true;
   }
 
+  if (desktopLocked) {
+    ignoringMouseEvents = true;
+    petWindow.setIgnoreMouseEvents(true, { forward: true });
+  }
+
   petWindow.loadFile(path.join(__dirname, "index.html"));
 
   petWindow.webContents.once("did-finish-load", () => {
     petWindow.webContents.send("pet:music-state", musicState);
+    petWindow.webContents.send("pet:desktop-lock", desktopLocked);
     if (pendingTaskComplete) {
       pendingTaskComplete = false;
       sendTaskComplete();
@@ -252,6 +261,43 @@ function sendTaskComplete() {
   }
 
   petWindow.webContents.send("pet:task-complete");
+}
+
+function getSettingsPath() {
+  return path.join(app.getPath("userData"), "settings.json");
+}
+
+function loadSettings() {
+  try {
+    const data = JSON.parse(fs.readFileSync(getSettingsPath(), "utf8"));
+    return data && typeof data === "object" ? data : {};
+  } catch (_error) {
+    return {};
+  }
+}
+
+function saveSettings(patch) {
+  try {
+    fs.writeFileSync(getSettingsPath(), JSON.stringify({ ...loadSettings(), ...patch }, null, 2));
+  } catch (error) {
+    console.error("Unable to save settings:", error);
+  }
+}
+
+// Locked desktop mode turns the pet into a passive always-on-top overlay:
+// the whole window ignores mouse input so clicks fall through to whatever is
+// underneath. The tray checkbox is the only way in or out of this mode.
+function applyDesktopLock() {
+  if (!petWindow || petWindow.isDestroyed()) return;
+
+  if (desktopLocked || isMac) {
+    ignoringMouseEvents = true;
+    petWindow.setIgnoreMouseEvents(true, { forward: true });
+  } else {
+    petWindow.setIgnoreMouseEvents(false);
+  }
+
+  petWindow.webContents.send("pet:desktop-lock", desktopLocked);
 }
 
 function loadNativeImage(filePath) {
@@ -441,6 +487,19 @@ function buildUtilityMenu(includeQuit) {
     },
     { type: "separator" },
     {
+      label: "锁定桌面（鼠标穿透）",
+      type: "checkbox",
+      checked: desktopLocked,
+      click: (item) => {
+        desktopLocked = Boolean(item.checked);
+        saveSettings({ desktopLocked });
+        applyDesktopLock();
+        rebuildTrayMenu();
+        if (isMac) createMacMenu();
+      },
+    },
+    { type: "separator" },
+    {
       label: "清除缓存",
       click: clearAppCache,
     },
@@ -466,7 +525,7 @@ ipcMain.handle("pet-window:end-drag", () => {
 });
 
 ipcMain.on("pet-window:set-ignore-mouse-events", (_event, ignore) => {
-  if (!isMac || !petWindow || petWindow.isDestroyed()) return;
+  if (desktopLocked || !isMac || !petWindow || petWindow.isDestroyed()) return;
 
   const shouldIgnore = Boolean(ignore);
 
