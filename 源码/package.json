@@ -1,6 +1,6 @@
 {
   "name": "line-puppy-desktop-pet",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "private": true,
   "description": "line puppy desktop pet using native GIF playback.",
   "author": "remake1026",
@@ -12,7 +12,7 @@
     "predist:mac": "npm run build:mac-input-listener",
     "start": "electron .",
     "task-complete": "electron . --task-complete",
-    "dist:win": "electron-builder --win nsis --x64 --ia32 --publish never",
+    "dist:win": "electron-builder --win nsis --x64 --publish never",
     "dist:mac": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg zip --universal --publish never"
   },
   "build": {
@@ -31,6 +31,8 @@
       "main.js",
       "pet.js",
       "preload.js",
+      "preload-settings.js",
+      "settings-window.html",
       "styles.css",
       "package.json"
     ],

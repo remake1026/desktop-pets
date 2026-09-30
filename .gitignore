@@ -45,3 +45,6 @@ Desktop.ini
 
 # Windows shortcut files generated locally
 *.lnk
+
+# Local test fixtures (copies of real user data — do not commit)
+源码/tests/_tmp_userdata/

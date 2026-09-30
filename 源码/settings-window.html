@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>动画日程 · line puppy</title>
+<style>
+:root {
+  --bg: #181825;
+  --panel: #1e1e2e;
+  --card: #232336;
+  --card-2: #2a2a40;
+  --text: #e6e6f0;
+  --muted: #9a9ab0;
+  --accent: #89b4fa;
+  --accent-2: #a6e3a1;
+  --border: #363650;
+  --danger: #f38ba8;
+  --radius: 12px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+}
+header {
+  padding: 18px 20px 14px;
+  background: linear-gradient(180deg, #232336, #1e1e2e);
+  border-bottom: 1px solid var(--border);
+}
+header h1 { margin: 0 0 4px; font-size: 17px; }
+header p { margin: 0; color: var(--muted); font-size: 12px; }
+main { padding: 16px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.card-title { margin: 0 0 2px; font-size: 14px; font-weight: 700; }
+.card-desc { margin: 0 0 12px; color: var(--muted); font-size: 12px; }
+button, select, input { font-family: inherit; font-size: 13px; }
+.btn-add, .btn-import, .btn-save, .btn-cancel {
+  border-radius: 8px; cursor: pointer; font-weight: 600; border: 1px solid transparent;
+}
+.btn-add { background: var(--accent); color: #11111b; padding: 7px 12px; }
+.btn-import { background: var(--card-2); color: var(--text); border-color: var(--border); padding: 7px 12px; }
+.btn-add:hover, .btn-import:hover { filter: brightness(1.08); }
+.row-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+/* ---- vertical timeline ---- */
+.vt-wrap {
+  max-height: 560px;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.vt {
+  position: relative;
+  min-width: 540px;
+  height: 768px; /* 24h × 32px */
+  --lanes: 1;
+}
+.vt-rail { position: absolute; left: 60px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+.vt-hour {
+  position: absolute; left: 0; width: 50px; padding-right: 10px;
+  text-align: right; transform: translateY(-50%);
+  font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.vt-now {
+  position: absolute; left: 44px; right: 8px; height: 2px; background: var(--danger);
+  z-index: 7; box-shadow: 0 0 6px rgba(243,139,168,.7);
+}
+.vt-now::before {
+  content: ""; position: absolute; left: -42px; top: -4px;
+  width: 10px; height: 10px; border-radius: 50%; background: var(--danger);
+}
+.vt-now-label {
+  position: absolute; left: 4px; top: -10px;
+  font-size: 10px; color: var(--danger); font-weight: 700;
+  background: var(--panel); padding: 1px 6px; border-radius: 4px;
+}
+.vt-card {
+  position: absolute; height: 30px; padding: 0 8px;
+  background: var(--card-2);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  display: flex; align-items: center; gap: 4px;
+  cursor: grab; user-select: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  z-index: 2; font-size: 11px;
+  left: calc(76px + var(--lane) * 146px);
+  width: 140px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.vt-card:hover { filter: brightness(1.08); }
+.vt-card.sel { outline: 2px solid var(--accent-2); outline-offset: 1px; z-index: 6; }
+.vt-card:active { cursor: grabbing; }
+.vt-card-time {
+  font-weight: 700; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: clip;
+}
+.vt-card-label {
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.vt-card-type, .vt-card-sys {
+  font-size: 9px; padding: 1px 4px; border-radius: 3px;
+  background: rgba(255,255,255,.06); color: var(--muted); flex: 0 0 auto;
+}
+.vt-card-sys { background: rgba(243,139,168,.15); color: var(--danger); }
+.vt-card-empty { color: var(--muted); font-style: italic; }
+
+/* ---- editor ---- */
+.tl-editor { margin-top: 12px; padding: 12px; border: 1px solid var(--accent); border-radius: 10px; background: var(--card-2); }
+.ed-head { display: flex; align-items: center; margin-bottom: 10px; font-size: 13px; }
+.ed-head b { font-weight: 700; }
+.ed-close { margin-left: auto; background: transparent; border: none; color: var(--muted); font-size: 18px; cursor: pointer; line-height: 1; }
+.ed-close:hover { color: var(--danger); }
+.ed-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.ed-row label { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px; }
+.ed-row select, .ed-row input[type="time"] {
+  background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px;
+}
+.ed-del { background: transparent; color: var(--danger); border: 1px solid var(--danger); border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+.ed-del:hover { background: var(--danger); color: #11111b; }
+.effect-chip {
+  display: inline-flex; align-items: center; gap: 4px; background: var(--panel);
+  border: 1px solid var(--accent); color: var(--accent); border-radius: 14px;
+  padding: 2px 4px 2px 10px; font-size: 12px;
+}
+.chip-x { background: transparent; border: none; color: var(--accent); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 2px; }
+.chip-x:hover { color: var(--danger); }
+.hint { color: var(--muted); font-size: 11px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; color: var(--muted); font-size: 11px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 14px; height: 4px; border-radius: 2px; display: inline-block; }
+.legend i.now { width: 14px; height: 2px; background: var(--danger); border-radius: 0; }
+
+/* ---- my gifs ---- */
+.gif-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px dashed var(--border); }
+.gif-item:first-child { border-top: none; }
+.gif-thumb { width: 34px; height: 34px; object-fit: contain; background: var(--panel); border-radius: 6px; border: 1px solid var(--border); flex: 0 0 auto; }
+.gif-label { flex: 1; word-break: break-all; }
+.gif-del { background: transparent; color: var(--danger); border: 1px solid var(--danger); border-radius: 6px; padding: 3px 10px; cursor: pointer; flex: 0 0 auto; }
+.gif-del:hover { background: var(--danger); color: #11111b; }
+
+#footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 16px 20px; border-top: 1px solid var(--border); background: var(--panel); position: sticky; bottom: 0; }
+.btn-save { background: var(--accent-2); color: #11111b; padding: 8px 18px; }
+.btn-cancel { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 8px 18px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>动画日程</h1>
+  <p>一条纵向时间轴看清全天的动图安排：拖动卡片改时间，点击编辑。</p>
+</header>
+
+<main>
+  <!-- 纵向时间轴 -->
+  <section class="card">
+    <h2 class="card-title">纵向时间轴</h2>
+    <p class="card-desc">时间从上到下 00:00 → 24:00；红色横线=现在；卡片左边色条代表动画类别（图例）。</p>
+    <div class="vt-wrap" id="vt-wrap">
+      <div class="vt" id="vt"></div>
+    </div>
+    <div class="row-actions">
+      <button class="btn-add" id="btn-add-scheduled">+ 定时动画</button>
+      <button class="btn-add" id="btn-add-timed">+ 时段动画</button>
+    </div>
+    <div class="tl-editor" id="tl-editor" hidden></div>
+    <div class="legend" id="tl-legend"></div>
+  </section>
+
+  <!-- 我的 GIF -->
+  <section class="card">
+    <h2 class="card-title">🖼 我的 GIF</h2>
+    <p class="card-desc">导入自己的动图，然后在时间轴卡片里选用。</p>
+    <button class="btn-import" id="btn-import-gif">📁 导入 GIF</button>
+    <div id="custom-gifs-list"></div>
+  </section>
+</main>
+
+<div id="footer">
+  <button class="btn-cancel" id="btn-cancel">取消</button>
+  <button class="btn-save" id="btn-save">保存</button>
+</div>
+
+<script>
+const ALL_EFFECTS = [
+  { value: "love520", label: "520（我爱你）" },
+  { value: "love521", label: "521（我愿意）" },
+  { value: "heart", label: "爱心" },
+  { value: "jump", label: "弹跳" },
+  { value: "mealtime", label: "用餐" },
+  { value: "sleep", label: "入睡" },
+  { value: "sleep2", label: "熟睡" },
+  { value: "morningReading", label: "晨读" },
+  { value: "morningDrink", label: "晨饮" },
+  { value: "afterWork", label: "下班" },
+  { value: "send", label: "发送" },
+  { value: "good", label: "点赞" },
+  { value: "delete", label: "删除" },
+  { value: "undo", label: "撤销" },
+  { value: "special", label: "特殊" },
+  { value: "music", label: "音乐" },
+  { value: "scroll", label: "滚动" },
+  { value: "default", label: "默认（睡眠）" },
+];
+
+const HOUR_PX = 32;
+let scheduleData = { windows: [], system: [] };
+let customGifList = [];
+let selectedId = null;
+let drag = null;
+
+const CATS = {
+  love:   { color: "#f38ba8", name: "爱情",      effects: ["love520","love521","heart"] },
+  meal:   { color: "#fab387", name: "用餐",      effects: ["mealtime","morningDrink"] },
+  sleep:  { color: "#cba6f7", name: "睡眠",      effects: ["sleep","sleep2","default"] },
+  work:   { color: "#94e2d5", name: "学习·工作",  effects: ["morningReading","afterWork"] },
+  act:    { color: "#89dceb", name: "互动",      effects: ["send","good","delete","undo","jump"] },
+  media:  { color: "#f5c2e7", name: "媒体",      effects: ["music","scroll","special"] },
+  custom: { color: "#f9e2af", name: "自定义·GIF", match: v => /^user\//.test(v) },
+  empty:  { color: "#6c7080", name: "未设置" },
+};
+const CAT_ORDER = ["love","meal","sleep","work","act","media","custom","empty"];
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function labelFor(value) {
+  const builtin = ALL_EFFECTS.find(e => e.value === value);
+  if (builtin) return builtin.label;
+  const custom = customGifList.find(g => g.value === value);
+  if (custom) return custom.label;
+  return value;
+}
+function categoryOf(v) {
+  for (const k of CAT_ORDER) {
+    const c = CATS[k];
+    if (c.match && c.match(v)) return k;
+    if (c.effects && c.effects.includes(v)) return k;
+  }
+  return "empty";
+}
+function darken(hex, amt) {
+  amt = amt == null ? 0.6 : amt;
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!m) return hex;
+  const r = Math.round(parseInt(m[1],16)*amt);
+  const g = Math.round(parseInt(m[2],16)*amt);
+  const b = Math.round(parseInt(m[3],16)*amt);
+  return "#" + [r,g,b].map(x => x.toString(16).padStart(2,"0")).join("");
+}
+const uid = () => "u" + Math.random().toString(36).slice(2, 9);
+function findEntry(id) {
+  return scheduleData.windows.find(e => e.id === id) || scheduleData.system.find(e => e.id === id);
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function timeToMin(s) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || ""));
+  if (!m) return 0;
+  return clamp(parseInt(m[1],10) * 60 + parseInt(m[2],10), 0, 1440);
+}
+function minToTime(m) {
+  m = clamp(Math.round(m), 0, 1440);
+  const h = Math.floor(m / 60), mm = m % 60;
+  return String(h).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+}
+
+function renderLegend() {
+  const el = document.getElementById("tl-legend");
+  if (!el) return;
+  el.innerHTML =
+    CAT_ORDER.filter(k => k !== "empty").map(k =>
+      `<span><i style="background:${CATS[k].color}"></i>${CATS[k].name}</span>`
+    ).join("") +
+    `<span><i style="font-style:normal;background:#5b5b75;height:4px"></i>系统内置（颜色偏暗）</span>` +
+    `<span><i class="now"></i>当前时间</span>`;
+}
+
+function renderVertical() {
+  const vt = document.getElementById("vt");
+  const items = [];
+  for (const e of scheduleData.windows) items.push({ entry: e, isSys: false });
+  for (const e of scheduleData.system) items.push({ entry: e, isSys: true });
+  items.sort((a, b) => timeToMin(a.entry.start) - timeToMin(b.entry.start));
+
+  const cardH = 46;
+  const laneEnds = [];
+  for (const it of items) {
+    const top = timeToMin(it.entry.start || "00:00") / 60 * HOUR_PX;
+    let lane = 0;
+    while (lane < laneEnds.length && laneEnds[lane] > top) lane++;
+    it.lane = lane;
+    it.top = top;
+    laneEnds[lane] = top + cardH + 4;
+  }
+  const lanes = Math.max(1, ...items.map(i => i.lane + 1));
+  vt.style.setProperty("--lanes", lanes);
+
+  // rail + hour ticks + now
+  let html = `<div class="vt-rail"></div>`;
+  for (let h = 0; h <= 24; h += 2) {
+    html += `<div class="vt-hour" style="top:${h * HOUR_PX}px">${String(h).padStart(2,"0")}:00</div>`;
+  }
+  const now = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const nowTop = nowMin / 60 * HOUR_PX;
+  html += `<div class="vt-now" style="top:${nowTop}px"><span class="vt-now-label">现在 ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}</span></div>`;
+
+  // cards
+  for (const it of items) {
+    const e = it.entry;
+    const effs = e.effects || [];
+    const catKey = categoryOf(effs[0] || "");
+    const color = CATS[catKey].color;
+    const sel = e.id === selectedId ? " sel" : "";
+    const isTimed = e.type === "timed";
+    const timeText = isTimed ? `${e.start || ""}–${e.end || ""}` : (e.start || "");
+    const labelText = effs.map(labelFor).join("、") || "未设置动图";
+    const typeName = isTimed ? "时段" : "定时";
+    const sysBadge = it.isSys ? `<span class="vt-card-sys">系统</span>` : "";
+    const borderColor = it.isSys ? darken(color) : color;
+    html += `<div class="vt-card${sel}" data-id="${e.id}" title="${escapeHtml(labelText + "  " + timeText)}" style="top:${it.top}px;--lane:${it.lane};border-left-color:${borderColor}">
+      <span class="vt-card-time">${escapeHtml(timeText)}</span>
+      <span class="vt-card-type">${typeName}</span>
+      ${sysBadge}
+    </div>`;
+  }
+
+  vt.innerHTML = html;
+}
+
+function renderEditor() {
+  const ed = document.getElementById("tl-editor");
+  if (!selectedId) { ed.hidden = true; ed.innerHTML = ""; return; }
+  const e = findEntry(selectedId);
+  if (!e) { selectedId = null; ed.hidden = true; ed.innerHTML = ""; return; }
+  const isSys = scheduleData.system.includes(e);
+  const isTimed = e.type === "timed";
+  const chips = (e.effects || []).map(ev =>
+    `<span class="effect-chip" data-effect="${escapeHtml(ev)}">${escapeHtml(labelFor(ev))}<button class="chip-x" data-effect="${escapeHtml(ev)}" title="移除">×</button></span>`
+  ).join("") || '<span class="hint">（还没有动图，右侧添加）</span>';
+  const builtinOpts = ALL_EFFECTS.map(x => `<option value="${x.value}">${x.label}</option>`).join("");
+  const customOpts = customGifList.length
+    ? `<optgroup label="我的 GIF">${customGifList.map(g => `<option value="${g.value}">${escapeHtml(g.label)}</option>`).join("")}</optgroup>`
+    : "";
+  ed.hidden = false;
+  ed.innerHTML = `
+    <div class="ed-head"><b>编辑${isSys ? "（系统内置）" : ""}</b><button class="ed-close" title="收起">×</button></div>
+    <div class="ed-row">
+      ${isSys ? "" : `<label>类型 <select class="ed-type"><option value="scheduled" ${!isTimed ? "selected" : ""}>定时（时间点）</option><option value="timed" ${isTimed ? "selected" : ""}>时段（时间段）</option></select></label>`}
+      <label>开始 <input type="time" class="ed-start" value="${e.start || ""}"></label>
+      ${isTimed ? `<label>结束 <input type="time" class="ed-end" value="${e.end || ""}"></label>` : ""}
+      <label><input type="checkbox" class="ed-enabled" ${e.enabled !== false ? "checked" : ""}> 启用</label>
+    </div>
+    <div class="ed-row"><span class="hint">动图：</span>${chips}<select class="effect-add"><option value="">+ 添加动图</option><optgroup label="内置动画">${builtinOpts}</optgroup>${customOpts}</select></div>
+    <div class="ed-row">${isSys ? '<span class="hint">系统内置动画不能删除，可停用或调整时间。</span>' : '<button class="ed-del">删除该动画</button>'}</div>
+  `;
+}
+
+function selectEntry(id) {
+  selectedId = id;
+  renderVertical();
+  renderEditor();
+}
+
+// ---- drag vertical (shift time) ----
+document.getElementById("vt").addEventListener("mousedown", (e) => {
+  const card = e.target.closest(".vt-card");
+  if (!card || e.button !== 0) return;
+  const id = card.dataset.id;
+  const entry = findEntry(id);
+  if (!entry) return;
+  const isTimed = entry.type === "timed";
+  const startMin = timeToMin(entry.start || "00:00");
+  const endMin = isTimed ? timeToMin(entry.end || "00:00") : startMin + 30;
+  drag = { id, entry, isTimed, startMin, endMin, y0: e.clientY, moved: false };
+  document.body.style.userSelect = "none";
+  e.preventDefault();
+});
+document.addEventListener("mousemove", (e) => {
+  if (!drag) return;
+  const deltaMin = ((e.clientY - drag.y0) / HOUR_PX) * 60;
+  if (Math.abs(e.clientY - drag.y0) > 3) drag.moved = true;
+  const SNAP = 5;
+  const snap = m => Math.round(m / SNAP) * SNAP;
+  if (drag.isTimed) {
+    const dur = drag.endMin - drag.startMin;
+    let ns = clamp(drag.startMin + deltaMin, 0, 1440 - dur);
+    drag.entry.start = minToTime(snap(ns));
+    drag.entry.end = minToTime(timeToMin(drag.entry.start) + dur);
+  } else {
+    let ns = clamp(drag.startMin + deltaMin, 0, 1410);
+    drag.entry.start = minToTime(snap(ns));
+  }
+  renderVertical();
+});
+document.addEventListener("mouseup", () => {
+  if (!drag) return;
+  const id = drag.id;
+  drag = null;
+  document.body.style.userSelect = "";
+  renderVertical();
+  selectEntry(id);
+});
+
+// ---- editor events ----
+document.getElementById("tl-editor").addEventListener("change", (e) => {
+  if (!selectedId) return;
+  const entry = findEntry(selectedId);
+  if (!entry) return;
+  const t = e.target;
+  if (t.classList.contains("ed-type")) {
+    entry.type = t.value;
+    if (entry.type === "timed") {
+      if (!entry.end) entry.end = entry.start || "12:00";
+      entry.interruptible = entry.interruptible ?? true;
+    } else { delete entry.end; entry.interruptible = false; }
+    renderEditor(); renderVertical();
+  } else if (t.classList.contains("ed-start")) {
+    entry.start = t.value; renderVertical();
+  } else if (t.classList.contains("ed-end")) {
+    entry.end = t.value; renderVertical();
+  } else if (t.classList.contains("ed-enabled")) {
+    entry.enabled = t.checked;
+  } else if (t.classList.contains("effect-add")) {
+    const v = t.value;
+    if (v) { entry.effects = entry.effects || []; if (!entry.effects.includes(v)) entry.effects.push(v); }
+    t.value = "";
+    renderEditor(); renderVertical();
+  }
+});
+document.getElementById("tl-editor").addEventListener("click", (e) => {
+  if (!selectedId) return;
+  const entry = findEntry(selectedId);
+  if (!entry) return;
+  if (e.target.classList.contains("chip-x")) {
+    const v = e.target.dataset.effect;
+    entry.effects = (entry.effects || []).filter(x => x !== v);
+    renderEditor(); renderVertical();
+  } else if (e.target.classList.contains("ed-close")) {
+    selectedId = null; renderEditor(); renderVertical();
+  } else if (e.target.classList.contains("ed-del")) {
+    const id = selectedId;
+    scheduleData.windows = scheduleData.windows.filter(en => en.id !== id);
+    selectedId = null; renderEditor(); renderVertical();
+  }
+});
+
+// ---- buttons ----
+document.getElementById("btn-add-scheduled").addEventListener("click", () => {
+  const id = uid();
+  scheduleData.windows.push({ id, type: "scheduled", start: "12:00", effects: [], interruptible: false, enabled: true });
+  selectEntry(id);
+});
+document.getElementById("btn-add-timed").addEventListener("click", () => {
+  const id = uid();
+  scheduleData.windows.push({ id, type: "timed", start: "12:00", end: "13:00", effects: [], interruptible: true, enabled: true });
+  selectEntry(id);
+});
+document.getElementById("btn-import-gif").addEventListener("click", async () => {
+  const res = await window.linePuppySettings.importGif();
+  if (res && res.ok && res.asset) {
+    if (!customGifList.find(g => g.value === res.asset.value)) customGifList.push(res.asset);
+    renderCustomGifs();
+    renderEditor();
+  }
+});
+document.getElementById("btn-cancel").addEventListener("click", () => window.close());
+document.getElementById("btn-save").addEventListener("click", async () => {
+  const res = await window.linePuppySettings.saveSchedule({
+    windows: scheduleData.windows.map(e => ({ ...e, effects: e.effects || [] })),
+    system: scheduleData.system.map(e => ({ ...e, effects: e.effects || [], enabled: e.enabled !== false })),
+  });
+  if (res && !res.ok) { alert("保存失败：" + (res.error || "未知错误")); return; }
+  window.close();
+});
+
+// ---- my gifs ----
+function renderCustomGifs() {
+  const list = document.getElementById("custom-gifs-list");
+  if (!customGifList.length) {
+    list.innerHTML = '<div class="hint" style="padding-top:8px">暂无导入的 GIF。点击上方「📁 导入 GIF」添加你自己的动图。</div>';
+    return;
+  }
+  list.innerHTML = customGifList.map(g => `
+    <div class="gif-item" data-value="${escapeHtml(g.value)}">
+      <img class="gif-thumb" src="gif://${encodeURIComponent(g.file)}" alt="" onerror="this.style.display='none'" />
+      <span class="gif-label">${escapeHtml(g.label)}</span>
+      <button class="gif-del" data-value="${escapeHtml(g.value)}" title="删除该 GIF">删除</button>
+    </div>`).join("");
+}
+document.getElementById("custom-gifs-list").addEventListener("click", async (e) => {
+  const btn = e.target.closest(".gif-del");
+  if (!btn) return;
+  const value = btn.dataset.value;
+  const asset = customGifList.find(g => g.value === value);
+  const label = asset ? asset.label : value;
+  if (!confirm(`确定删除 GIF「${label}」吗？\n该文件将被永久删除，且所有引用它的动画时段也会一并移除。`)) return;
+  const res = await window.linePuppySettings.deleteGif(value);
+  if (res && res.ok) {
+    const strip = (entry) => { if (entry.effects) entry.effects = entry.effects.filter(x => x !== value); };
+    scheduleData.windows.forEach(strip);
+    scheduleData.system.forEach(strip);
+    customGifList = customGifList.filter(g => g.value !== value);
+    renderVertical();
+    renderEditor();
+    renderCustomGifs();
+  } else {
+    alert("删除失败：" + (res && res.error ? res.error : "未知错误"));
+  }
+});
+
+// ---- init ----
+const normalize = (e) => {
+  if (!e.effects) e.effects = e.effect ? [e.effect] : [];
+  delete e.effect;
+  return e;
+};
+function reloadAll() {
+  return window.linePuppySettings.loadSchedule()
+    .then(data => {
+      scheduleData = {
+        windows: (data.windows || []).map(normalize),
+        system: (data.system || []).map(normalize),
+      };
+      return window.linePuppySettings.getCustomGifs();
+    })
+    .then(custom => {
+      customGifList = Array.isArray(custom) ? custom : [];
+      renderLegend();
+      renderVertical();
+      renderEditor();
+      renderCustomGifs();
+      // scroll the timeline so the current-time line is roughly centered
+      const wrap = document.getElementById("vt-wrap");
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      wrap.scrollTop = Math.max(0, nowMin / 60 * HOUR_PX - wrap.clientHeight / 2);
+    });
+}
+reloadAll();
+// keep the "now" marker fresh
+setInterval(() => { if (!drag) renderVertical(); }, 60000);
+</script>
+</body>
+</html>

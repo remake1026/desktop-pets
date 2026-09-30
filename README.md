@@ -6,12 +6,12 @@
 
 一个基于 Electron 的桌面萌宠。小狗会悬浮在桌面上，根据鼠标、键盘、时间和软件状态播放不同动画，也可以拖动、缩放和设置开机自启动。检测到音乐播放时，会将两段音乐动画各循环播放。希望小狗可以一直陪在你身边～
 
-当前 Windows 版本为 **V.2.1.1**。
+当前 Windows 版本为 **V.2.1.2**。
 
 ## 下载
 
 
-[下载最新版 Windows 10 / 11 安装包（V2.1.1）](https://github.com/remake1026/desktop-pets/releases/download/2.1.1/line.puppy-2.1.1-win10-11-set.up.exe)
+[下载最新版 Windows 10 / 11 安装包（V2.1.2）](https://github.com/ForrestGump02/desktop-pets/releases/download/2.1.2/line.puppy-2.1.2-win10-11-set.up.exe)
 
 [下载最新版 macOS Apple Silicon（M1 / M2 / M3 / M4）安装包（V2.1.2）](https://github.com/remake1026/desktop-pets/releases/download/V.2.1.2/line.puppy-2.1.1-mac-arm64.1.dmg)
 
@@ -84,7 +84,7 @@ Windows 支持全局键盘互动，切换到其他软件后仍能响应；macOS 
 
 | 最新安装包 | 系统 | 架构 |
 | --- | --- | --- |
-| [line puppy V2.1.1](https://github.com/remake1026/desktop-pets/releases/download/2.1.1/line.puppy-2.1.1-win10-11-set.up.exe)（约 182 MB） | Windows 10、Windows 11 | 自动选择 x86 / x64 |
+| [line puppy V2.1.2](https://github.com/ForrestGump02/desktop-pets/releases/download/2.1.2/line.puppy-2.1.2-win10-11-set.up.exe)（约 98 MB） | Windows 10、Windows 11 | x64（已去除 ia32） |
 
 1. 下载并双击安装包；旧版正在运行时，请先从托盘菜单退出。
 2. 选择安装范围和安装位置，再选择是否创建桌面快捷方式、是否开机自启动。
@@ -178,7 +178,7 @@ npm ci
 npm run dist:win
 ```
 
-安装包输出到 `dist/standard/`，同时包含 x86 和 x64 版本。
+安装包输出到 `dist/standard/`，**仅 x64 安装包**（已去除 ia32，因打包阶段代理总断流，详见 PR #7 讨论）。
 
 ### 构建 macOS 安装包
 

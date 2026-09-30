@@ -21,13 +21,9 @@ contextBridge.exposeInMainWorld("linePuppyWindow", {
   },
   onTaskComplete(callback) {
     if (typeof callback !== "function") return () => {};
-
     const listener = () => callback();
     ipcRenderer.on("pet:task-complete", listener);
-
-    return () => {
-      ipcRenderer.removeListener("pet:task-complete", listener);
-    };
+    return () => ipcRenderer.removeListener("pet:task-complete", listener);
   },
   onScroll(callback) {
     if (typeof callback !== "function") return () => {};
@@ -46,5 +42,26 @@ contextBridge.exposeInMainWorld("linePuppyWindow", {
     const listener = (_event, action) => callback(action);
     ipcRenderer.on("pet:keyboard-effect", listener);
     return () => ipcRenderer.removeListener("pet:keyboard-effect", listener);
+  },
+  // desktop-lock: listen for lock state changes (from tray or settings window)
+  onDesktopLockChange(callback) {
+    if (typeof callback !== "function") return () => {};
+    const listener = (_event, locked) => callback(Boolean(locked));
+    ipcRenderer.on("pet:desktop-lock", listener);
+    return () => ipcRenderer.removeListener("pet:desktop-lock", listener);
+  },
+  // schedule: listen for schedule config updates (from settings window)
+  onScheduleChange(callback) {
+    if (typeof callback !== "function") return () => {};
+    const listener = (_event, data) => callback(data);
+    ipcRenderer.on("pet:schedule-changed", listener);
+    return () => ipcRenderer.removeListener("pet:schedule-changed", listener);
+  },
+  // custom gifs: receive user-imported GIF descriptors with resolvable URLs
+  onCustomGifs(callback) {
+    if (typeof callback !== "function") return () => {};
+    const listener = (_event, gifs) => callback(gifs);
+    ipcRenderer.on("pet:custom-gifs", listener);
+    return () => ipcRenderer.removeListener("pet:custom-gifs", listener);
   },
 });

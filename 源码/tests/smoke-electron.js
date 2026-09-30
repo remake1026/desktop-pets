@@ -95,7 +95,7 @@ if (!process.versions.electron) {
       if (window.webContents.isLoading()) await new Promise(resolve => window.webContents.once("did-finish-load", resolve));
       const evaluate = code => window.webContents.executeJavaScript(code);
       window.webContents.send("pet:music-state", "idle");
-      await evaluate(`window.StartupDate = Date; window.Date = class extends StartupDate { getHours() { return 8; } getMinutes() { return 0; } }; void 0;`);
+      await evaluate(`window.StartupDate = Date; window.__testDateOverride__ = new Date(2000, 0, 1, 8, 0, 0); window.Date = class extends StartupDate { getHours() { return 8; } getMinutes() { return 0; } }; void 0;`);
       assert.equal(await evaluate("currentState"), "startup");
       assert.equal(await evaluate("pet.complete && pet.naturalWidth === 240"), true);
       window.webContents.send("pet:scroll");
@@ -109,7 +109,7 @@ if (!process.versions.electron) {
     if (await evaluate("currentState") === "scroll") await wait(1800);
     assert.equal(await evaluate("currentState"), "default");
       console.log("PASS: startup GIF plays once, completes, and ignores early click/scroll");
-      await evaluate(`window.RealDate = Date; window.Date = class extends RealDate { getHours() { return 12; } getMinutes() { return 15; } }; updateMealtime();`);
+      await evaluate(`window.RealDate = Date; window.__testDateOverride__ = new Date(2000, 0, 1, 12, 15, 0); window.Date = class extends RealDate { getHours() { return 12; } getMinutes() { return 15; } }; updateMealtime();`);
       assert.equal(await evaluate("currentState"), "mealtime");
       window.webContents.send("pet:scroll");
       await wait(400);
@@ -126,7 +126,7 @@ if (!process.versions.electron) {
       assert.equal(await evaluate("currentState"), "click");
       await wait(1500);
       assert.equal(await evaluate("currentState"), "mealtime");
-      await evaluate("window.Date = class extends RealDate { getHours() { return 13; } getMinutes() { return 0; } }; updateMealtime();");
+      await evaluate("window.__testDateOverride__ = new Date(2000, 0, 1, 13, 0, 0); window.Date = class extends RealDate { getHours() { return 13; } getMinutes() { return 0; } }; updateMealtime();");
       assert.equal(await evaluate("currentState"), "default");
       console.log("PASS: real Electron IPC, GIF loading, scroll completion, local-only click, meal schedule");
       for (const [effect, duration] of [["send", 1740], ["good", 2000], ["delete", 1840]]) {
@@ -155,7 +155,8 @@ if (!process.versions.electron) {
       assert.equal(await evaluate("currentState"), "default");
       console.log("PASS: 520/521 real GIFs loop past one cycle, switch by minute, and return to default");
       for (const [hour, state, asset] of [[23, 'sleep', 'sleepy.gif'], [0, 'sleep2', 'sleepy2.gif'], [2, 'default', 'sleep.gif']]) {
-        await evaluate(`window.Date = class extends RealDate { getHours() { return ${hour}; } getMinutes() { return 0; } }; updateScheduledAnimations();`);
+        const mockDate = `new Date(2000, 0, 1, ${hour}, 0, 0)`;
+        await evaluate(`window.__testDateOverride__ = ${mockDate}; updateScheduledAnimations(${mockDate}); updateTimedInteractions(${mockDate});`);
         await wait(150);
         assert.equal(await evaluate('currentState'), state);
         assert.equal(await evaluate(`pet.complete && pet.naturalWidth > 0 && pet.src.endsWith(${JSON.stringify(asset)})`), true);
